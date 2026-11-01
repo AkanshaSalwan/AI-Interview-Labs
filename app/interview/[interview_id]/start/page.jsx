@@ -434,7 +434,7 @@ Key Guidelines:
       <div className='grid grid-cols-1 md:grid-cols-2 gap-7 mt-5'>
         <div className='bg-white h-[400px] rounded-lg border flex flex-col gap-3 flex items-center justify-center'>
           <div className='relative'>
-            {isAssistantSpeaking && <span className='absolute inset-0 rounded-full bg-blue-500 opacity-70 animate-ping' />}
+            {isAssistantSpeaking && <span className='absolute inset-0 rounded-full bg-violet-500 opacity-70 animate-ping' />}
             <Image src={'/ai.png'} alt='ai'
               width={100}
               height={100}

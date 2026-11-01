@@ -154,11 +154,11 @@ function Interview() {
                     />
                 </div>
 
-                <div className='mt-4 flex items-start gap-2.5 rounded-md border border-blue-100 bg-blue-50 p-3'>
-                    <Info className='mt-0.5 h-4 w-4 shrink-0 text-blue-600' />
+                <div className='mt-4 flex items-start gap-2.5 rounded-md border border-violet-100 bg-violet-50 p-3'>
+                    <Info className='mt-0.5 h-4 w-4 shrink-0 text-violet-600' />
                     <div>
-                        <h2 className='text-sm font-semibold text-blue-800'>Before you begin</h2>
-                        <ul className='mt-1 list-disc space-y-0.5 pl-4 text-xs text-blue-700'>
+                        <h2 className='text-sm font-semibold text-violet-800'>Before you begin</h2>
+                        <ul className='mt-1 list-disc space-y-0.5 pl-4 text-xs text-violet-700'>
                             <li>Ensure you have a stable internet connection</li>
                             <li>Test your camera and microphone</li>
                             <li>Find a quiet place for the interview</li>

@@ -1,70 +1,51 @@
 'use client'
-import { Button } from '@/components/ui/button';
-import { Loader2Icon, Video } from 'lucide-react';
-import React, { useState, useEffect } from 'react'
+import React, { useState, useEffect, useMemo } from 'react'
+import Link from 'next/link'
+import { ArrowRight } from 'lucide-react'
 import { createClient } from '@/services/supabaseClient';
 import { useUser } from '@/app/provider';
-import InterviewCard from './InterviewCard';
-
+import InterviewGrid from '../../_components/InterviewGrid';
 
 
 function LatestinterviewList() {
-    const supabase = createClient();
+    const supabase = useMemo(() => createClient(), []);
     const [interviewList, setInterviewList] = useState([]);
     const [loading, setLoading] = useState(true);
     const { user } = useUser();
 
     useEffect(() => {
-        if (user) {
-            getInterviewList();
-        }
-    }, [user]);
+        if (!user?.email) return;
 
-    const getInterviewList = async () => {
-        setLoading(true);
-        const { data: interviews, error } = await supabase
-            .from('interviews')
-            .select('*')
-            .eq('userEmail', user?.email)
+        const getInterviewList = async () => {
+            setLoading(true);
+            const { data: interviews, error } = await supabase
+                .from('interviews')
+                .select('*')
+                .eq('userEmail', user.email)
+                .order('id', { ascending: false })
+                .limit(6);
 
-        if (error) {
-            console.error(error);
-            setInterviewList([]);
+            if (error) {
+                console.error(error);
+            }
+            setInterviewList(error ? [] : interviews || []);
             setLoading(false);
-            return;
         }
 
-        setInterviewList(interviews || []);
-        setLoading(false);
-    }
-
-   
+        getInterviewList();
+    }, [supabase, user?.email]);
 
     return (
-        <div>
-            <h2 className='font-bold text-2xl mt-5'>Previously Created Interviews</h2>
-
-            {loading &&
-            <div className='p-5 flex items-center justify-center gap-2 bg-white rounded-lg border border-gray-200'>
-                <Loader2Icon className='h-5 w-5 animate-spin text-primary' />
-                <p className='text-sm text-gray-500'>Loading interviews...</p>
-            </div>}
-
-            {!loading && interviewList?.length == 0 &&
-            <div className='p-5 flex flex-col gap-3 items-center p-5 bg-white rounded-lg border border-gray-200'>
-                <Video className='h-8 w-8 text-primary' />
-                <h2 className='font-bold text-2xl'>No interviews created yet</h2>
-                <Button>+ Create New Interview</Button>
-            </div>}
-
-            {!loading && interviewList?.length > 0 &&
-            <div className='grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5'>
-                {interviewList.map((interview,index) => (
-                   <InterviewCard interview={interview} key={interview?.interview_id || index}/>
-                ))} 
+        <div className='mt-10'>
+            <div className='mb-4 flex items-center justify-between'>
+                <h2 className='text-lg font-semibold text-slate-900'>Recently created interviews</h2>
+                {interviewList.length > 0 && (
+                    <Link href='/all-interviews' className='inline-flex items-center gap-1 text-sm font-medium text-violet-600 hover:text-violet-700'>
+                        View all <ArrowRight className='size-4' />
+                    </Link>
+                )}
             </div>
-
-            }
+            <InterviewGrid interviews={interviewList} loading={loading} />
         </div>
     )
 }

@@ -9,9 +9,17 @@ import { Button } from '@/components/ui/button';
 
 
 
-function FormContainer({ onHandleInputChange , GoToNext}) {
+const DURATIONS = [
+    { value: '5', label: '5 minutes' },
+    { value: '15', label: '15 minutes' },
+    { value: '30', label: '30 minutes' },
+    { value: '45', label: '45 minutes' },
+    { value: '60', label: '60 minutes' },
+]
 
-    const [interviewType, setInterviewType] = useState([ ]);
+function FormContainer({ onHandleInputChange , GoToNext, defaults }) {
+
+    const [interviewType, setInterviewType] = useState(defaults?.types ?? []);
     
     useEffect(()=>{
         if(interviewType)
@@ -38,17 +46,19 @@ function FormContainer({ onHandleInputChange , GoToNext}) {
             <div className='mt-5'>
                 <h2 className='text-sm'>Interview Duration</h2>
 
-                <Select onValueChange={(value) => onHandleInputChange('interviewDuration', value)}>
+                <Select
+                    items={DURATIONS}
+                    defaultValue={defaults?.interviewDuration}
+                    onValueChange={(value) => onHandleInputChange('interviewDuration', value)}
+                >
                     <SelectTrigger className="w-full mt-2">
                         <SelectValue placeholder="Select Interview Duration" />
 
                     </SelectTrigger>
                     <SelectContent>
-                        <SelectItem value="5">5 minutes</SelectItem>
-                        <SelectItem value="15">15 minutes</SelectItem>
-                        <SelectItem value="30">30 minutes</SelectItem>
-                        <SelectItem value="45">45 minutes</SelectItem>
-                        <SelectItem value="60">60 minutes</SelectItem>
+                        {DURATIONS.map((duration) => (
+                            <SelectItem key={duration.value} value={duration.value}>{duration.label}</SelectItem>
+                        ))}
                     </SelectContent>
                 </Select>
 
@@ -63,7 +73,7 @@ function FormContainer({ onHandleInputChange , GoToNext}) {
                     {InterviewType.map((type, index) => (
                         <div
                             key={index}
-                            className={`flex cursor-pointer items-center gap-2 p-1 px-2 border rounded-2xl whitespace-nowrap hover:bg-secondary ${interviewType.includes(type.title) ? 'bg-blue-50 text-primary border-primary' : 'bg-white border-gray-300'}`}
+                            className={`flex cursor-pointer items-center gap-2 p-1 px-2 border rounded-2xl whitespace-nowrap hover:bg-secondary ${interviewType.includes(type.title) ? 'bg-violet-50 text-primary border-primary' : 'bg-white border-gray-300'}`}
                             onClick={() => setInterviewType((prev) =>
                                 prev.includes(type.title)
                                     ? prev.filter((item) => item !== type.title)

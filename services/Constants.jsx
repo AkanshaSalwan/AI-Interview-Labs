@@ -1,8 +1,8 @@
-import { LayoutDashboard, Calendar, List, WalletCards, Settings } from "lucide-react"
+import { LayoutDashboard, Calendar, List, WalletCards, Settings, Mic, ClipboardList, TrendingUp } from "lucide-react"
 import { Code2Icon, User2Icon, BriefcaseBusinessIcon, PuzzleIcon } from "lucide-react"
 
 
-export const SideBarOptions = [
+export const RecruiterSidebarOptions = [
   {
     name: 'Dashboard',
     icon: LayoutDashboard,
@@ -22,6 +22,34 @@ export const SideBarOptions = [
     name: 'Billing',
     icon: WalletCards,
     path: '/billing'
+  },
+  {
+    name: 'Settings',
+    icon: Settings,
+    path: '/settings'
+  }
+]
+
+export const CandidateSidebarOptions = [
+  {
+    name: 'Dashboard',
+    icon: LayoutDashboard,
+    path: '/candidate/dashboard'
+  },
+  {
+    name: 'Practice',
+    icon: Mic,
+    path: '/candidate/practice'
+  },
+  {
+    name: 'My Interviews',
+    icon: ClipboardList,
+    path: '/candidate/interviews'
+  },
+  {
+    name: 'Progress',
+    icon: TrendingUp,
+    path: '/candidate/progress'
   },
   {
     name: 'Settings',

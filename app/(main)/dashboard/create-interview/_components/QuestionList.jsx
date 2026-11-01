@@ -151,11 +151,11 @@ function QuestionList({ formData, onCreateLink }) {
   return (
     <div>
       {loading &&
-        <div className='p-5 bg-blue-50 rounded-2xl border border-blue-500 flex gap-5 items-center'>
+        <div className='p-5 bg-violet-50 rounded-2xl border border-violet-500 flex gap-5 items-center'>
           <Loader2Icon className='animate-spin' />
           <div>
             <h2 className='font-medium'>Generating Question List...</h2>
-            <p className='text-blue-500'>Our AI is crafting personalized questions bases on your job position and job description.</p>
+            <p className='text-violet-500'>Our AI is crafting personalized questions bases on your job position and job description.</p>
           </div>
         </div>
       }

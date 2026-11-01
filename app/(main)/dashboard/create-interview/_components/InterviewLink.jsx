@@ -2,12 +2,12 @@ import React from 'react'
 import Image from 'next/image'
 import { Input } from '@base-ui/react'
 import { Button } from '@/components/ui/button'
-import { ArrowLeft, Clock, Copy, List, Mail, Plus } from 'lucide-react'
+import { ArrowLeft, Clock, Copy, List, Mail, PhoneCall, Plus } from 'lucide-react'
 import Link from 'next/link'
 import { toast } from '@/components/ui/toast'
 
 
-function InterviewLink({ interview_id, formData }) {
+function InterviewLink({ interview_id, formData, isScreening = false }) {
   const Url = `${process.env.NEXT_PUBLIC_HOST_URL?.replace(/\/+$/, '')}/${interview_id}`
 
   const GetInterviewUrl = () => {
@@ -27,13 +27,24 @@ function InterviewLink({ interview_id, formData }) {
         height={80}
         className='w-[80px] h-[80px] '
       />
-      <h2 className='font-bold text-lg mt-4'>Your AI Interview is Ready</h2>
+      <h2 className='font-bold text-lg mt-4'>
+        {isScreening ? 'Your Phone Screening Call is Ready' : 'Your AI Interview is Ready'}
+      </h2>
       <p className='mt-3'>Share this link with your candidates to start the interview process</p>
+
+      {isScreening && (
+        <Link
+          href={`/interview/${interview_id}`}
+          className='inline-flex h-11 items-center gap-2 rounded-xl bg-gradient-to-r from-violet-600 to-fuchsia-500 px-6 font-medium text-white shadow-lg shadow-violet-500/30 transition-all hover:shadow-xl hover:shadow-violet-500/40'
+        >
+          <PhoneCall className='size-5' /> Start Call Now
+        </Link>
+      )}
 
       <div className='mx-auto mt-6 w-full max-w-2xl rounded-xl border border-gray-100 bg-white p-6'>
         <div className='flex items-center justify-between gap-3'>
           <h2 className='font-bold'>Interview Link</h2>
-          <h2 className='whitespace-nowrap rounded-2xl bg-blue-50 px-2 py-1 text-sm text-primary'>Valid for 30 Days</h2>
+          <h2 className='whitespace-nowrap rounded-2xl bg-violet-50 px-2 py-1 text-sm text-primary'>Valid for 30 Days</h2>
         </div>
         <div className='mt-2 flex gap-2 items-center'>
           <Input
@@ -46,7 +57,7 @@ function InterviewLink({ interview_id, formData }) {
         <hr className='my-5' />
 
         <div className='flex gap-5 items-center'>
-          <h2 className='text-sm text-gray-500 flex items-center gap-2'><Clock className='w-4 h-4' />  {formData?.duration}</h2>
+          <h2 className='text-sm text-gray-500 flex items-center gap-2'><Clock className='w-4 h-4' />  {formData?.interviewDuration} minutes</h2>
           <h2 className='text-sm text-gray-500 flex items-center gap-2'><List className='w-4 h-4' /> 10 Questions</h2>
         </div>
 
@@ -64,7 +75,7 @@ function InterviewLink({ interview_id, formData }) {
         <Link href={'/dashboard'} >
           <Button variant={'outline'}><ArrowLeft /> Back To Dashboard</Button>
         </Link>
-        <Link href={'/create-interview'} >
+        <Link href={'/dashboard/create-interview'} >
           <Button> <Plus />Create New Interview</Button>
         </Link>
       </div>

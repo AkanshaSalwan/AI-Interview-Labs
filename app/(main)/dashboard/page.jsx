@@ -1,13 +1,18 @@
 import React from 'react'
 import CreateOptions from './_components/CreateOptions'
 import LatestinterviewList from './_components/LatestinterviewList'
+import RecruiterStats from './_components/RecruiterStats'
+import PageHeader from '../_components/PageHeader'
 
 function Dashboard() {
   return (
     <div>
-      <h2 className='my-2 font-bold text-2xl'>Dashboard</h2>
+      <PageHeader
+        title='Dashboard'
+        description='Create AI interviews, share them with candidates and review results.'
+      />
+      <RecruiterStats />
       <CreateOptions />
-
       <LatestinterviewList />
     </div>
   )
