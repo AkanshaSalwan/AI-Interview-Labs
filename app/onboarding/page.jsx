@@ -1,6 +1,5 @@
 'use client'
 import { useState } from 'react'
-import Image from 'next/image'
 import { useRouter } from 'next/navigation'
 import { ArrowRight, BriefcaseBusiness, Check, GraduationCap, Loader2 } from 'lucide-react'
 import { createClient } from '@/services/supabaseClient'
@@ -9,6 +8,7 @@ import { ROLES, homeForRole } from '@/services/roles'
 import { isRecruiterNotApproved, saveActiveRole } from '@/services/userProfile'
 import { toast } from '@/components/ui/toast'
 import { cn } from '@/lib/utils'
+import Logo from '@/components/brand/Logo'
 
 const ROLE_OPTIONS = [
   {
@@ -73,18 +73,11 @@ function Onboarding() {
       <div className="pointer-events-none absolute -top-40 left-1/2 size-[600px] -translate-x-1/2 rounded-full bg-violet-300/30 blur-3xl" />
 
       <div className="relative w-full max-w-3xl">
-        <Image
-          src="/AI Interview Voice Agent Logo.png"
-          alt="AI Interview"
-          width={2172}
-          height={724}
-          priority
-          className="mx-auto h-auto w-[170px]"
-        />
+        <div className="flex justify-center"><Logo /></div>
 
         <div className="mt-8 text-center">
           <h1 className="text-3xl font-bold tracking-tight text-slate-900 sm:text-4xl">
-            Welcome{user?.name ? `, ${user.name.split(' ')[0]}` : ''}! How will you use AI Interview?
+            Welcome{user?.name ? `, ${user.name.split(' ')[0]}` : ''}! How will you use AI Interview Labs?
           </h1>
           <p className="mt-3 text-slate-500">
             Pick where to start. You can switch between workspaces any time from the sidebar.

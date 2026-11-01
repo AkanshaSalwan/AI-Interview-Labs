@@ -1,13 +1,13 @@
 'use client'
 import { useEffect, useMemo, useState } from 'react'
 import Link from 'next/link'
-import Image from 'next/image'
 import { ArrowLeft, CheckCircle2, Loader2, MessageSquareText, RotateCcw, ThumbsDown, ThumbsUp } from 'lucide-react'
 import { createClient } from '@/services/supabaseClient'
 import { isRecommended, overallScore } from '@/services/scores'
 import TranscriptView from '@/components/interview/TranscriptView'
 import DetailedFeedback from '@/components/interview/DetailedFeedback'
 import { cn } from '@/lib/utils'
+import Logo from '@/components/brand/Logo'
 
 const RATING_LABELS = {
   technicalSkills: 'Technical skills',
@@ -172,7 +172,7 @@ function InterviewResult({ interviewId, feedbackId }) {
       </section>
 
       <div className='mt-10 flex justify-center'>
-        <Image src='/AI Interview Voice Agent Logo.png' alt='AI Interview' width={2172} height={724} className='h-auto w-[120px] opacity-60' />
+        <Logo size='sm' className='opacity-70' />
       </div>
     </main>
   )

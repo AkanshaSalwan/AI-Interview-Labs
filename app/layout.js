@@ -14,7 +14,7 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata = {
-  title: "AI Interview — Voice interviews for hiring and practice",
+  title: "AI Interview Labs — Voice interviews for hiring and practice",
   description:
     "Recruiters run AI voice interviews and get scored reports. Candidates practice with an AI interviewer and track their progress.",
 };

@@ -1,4 +1,4 @@
-# AI Recruiter Voice Agent
+# AI Interview Labs
 
 This is a [Next.js](https://nextjs.org) project.
 

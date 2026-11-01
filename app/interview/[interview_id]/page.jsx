@@ -8,6 +8,7 @@ import { Button } from '@/components/ui/button'
 import { InterviewDataContext } from '@/context/InterviewDataContext'
 import { createClient } from '@/services/supabaseClient'
 import { useUser } from '@/app/provider'
+import Logo from '@/components/brand/Logo'
 
 
 
@@ -98,13 +99,7 @@ function Interview() {
         <main className='min-h-screen bg-slate-50 px-4 py-8 sm:py-12'>
             <section className='mx-auto w-full max-w-md rounded-xl border border-slate-200 bg-white p-6 shadow-sm'>
                 <div className='flex justify-center'>
-                    <Image
-                        src="/AI Interview Voice Agent Logo.png"
-                        alt='AI Interview Voice Agent'
-                        width={140}
-                        height={50}
-                        className='h-[50px] w-[140px] object-contain'
-                    />
+                    <Logo />
                 </div>
 
                 <div className='mt-3 flex justify-center'>

@@ -1,12 +1,11 @@
     
 import React from 'react'
-import Image from 'next/image'
+import Logo from '@/components/brand/Logo'
 
 function InterviewHeader() {
   return (
     <div className='p-4 shadow-sm'>
-        <Image src="/AI Interview Voice Agent Logo.png" alt='logo' width={100} height={50} 
-        className='w-[140px] h-[50px]'/>
+        <Logo priority />
     </div>
   )
 }

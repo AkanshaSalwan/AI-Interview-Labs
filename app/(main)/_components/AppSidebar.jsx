@@ -23,6 +23,7 @@ import { toast } from "@/components/ui/toast"
 import { useUser } from "@/app/provider"
 import { createClient } from "@/services/supabaseClient"
 import { cn } from "@/lib/utils"
+import Logo from '@/components/brand/Logo'
 
 export function AppSidebar() {
     const pathname = usePathname()
@@ -66,14 +67,7 @@ export function AppSidebar() {
         <Sidebar className="border-r border-slate-200/80">
             <SidebarHeader className="gap-5 px-4 pt-5">
                 <Link href="/" className="block">
-                    <Image
-                        src="/AI Interview Voice Agent Logo.png"
-                        alt="AI Interview"
-                        width={2172}
-                        height={724}
-                        priority
-                        className="h-auto w-[170px]"
-                    />
+                    <Logo priority />
                 </Link>
                 <Link
                     href={isCandidate ? '/candidate/practice' : '/dashboard/create-interview'}

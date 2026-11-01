@@ -7,6 +7,7 @@ import { createClient } from '@/services/supabaseClient.js';
 import { ROLES, canAccess, homeForRole, safeNextPath } from '@/services/roles';
 import { RECRUITER_NOT_APPROVED_NOTICE, saveRoleOrFallBackToCandidate } from '@/services/userProfile';
 import { cn } from '@/lib/utils';
+import Logo from '@/components/brand/Logo'
 
 const ERROR_MESSAGES = {
   login_failed: 'We couldn’t complete your sign-in. Please try again.',
@@ -151,7 +152,7 @@ function Login() {
         <div className="pointer-events-none absolute -bottom-32 -left-20 size-96 rounded-full bg-fuchsia-300/20 blur-3xl" />
 
         <Link href="/" className="relative w-fit rounded-2xl bg-white/95 px-4 py-2 shadow-lg">
-          <Image src="/AI Interview Voice Agent Logo.png" alt="AI Interview" width={2172} height={724} priority className="h-auto w-[150px]" />
+          <Logo size="sm" />
         </Link>
 
         <div className="relative max-w-md">
@@ -179,13 +180,7 @@ function Login() {
       {/* Sign-in panel */}
       <section className="flex items-center justify-center bg-slate-50 px-6 py-12">
         <div className="w-full max-w-sm">
-          <Image
-            src="/AI Interview Voice Agent Logo.png"
-            alt="AI Interview"
-            width={2172}
-            height={724}
-            className="mx-auto mb-8 h-auto w-[180px] lg:hidden"
-          />
+          <div className="mb-8 flex justify-center lg:hidden"><Logo /></div>
 
           <div className="rounded-2xl border border-slate-200 bg-white p-8 shadow-xl shadow-slate-200/60">
             <h2 className="text-2xl font-bold tracking-tight text-slate-900">

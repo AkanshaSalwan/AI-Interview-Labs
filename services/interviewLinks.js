@@ -5,7 +5,7 @@ export function interviewUrl(interviewId) {
 
 // Opens the user's mail app with an invitation already written.
 export function openInviteEmail({ to = '', jobPosition, interviewId, candidateName }) {
-  const subject = encodeURIComponent(`Interview invitation: ${jobPosition ?? 'AI Interview'}`)
+  const subject = encodeURIComponent(`Interview invitation: ${jobPosition ?? 'AI Interview Labs'}`)
   const body = encodeURIComponent(
     `Hi${candidateName ? ` ${candidateName}` : ''},\n\n` +
     `You're invited to an AI voice interview for the ${jobPosition ?? ''} role.\n\n` +
