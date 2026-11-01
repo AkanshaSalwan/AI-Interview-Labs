@@ -2,12 +2,12 @@
 import { useEffect, useState } from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
-import { BriefcaseBusiness, CheckCircle2, GraduationCap, Loader2 } from 'lucide-react';
+import { ArrowLeftRight, ArrowRight, BarChart3, BriefcaseBusiness, Check, Eye, EyeOff, Loader2, Lock, Mail, Target, UserRound, Zap } from 'lucide-react';
 import { createClient } from '@/services/supabaseClient.js';
 import { ROLES, canAccess, homeForRole, safeNextPath } from '@/services/roles';
 import { RECRUITER_NOT_APPROVED_NOTICE, saveRoleOrFallBackToCandidate } from '@/services/userProfile';
 import { cn } from '@/lib/utils';
-import Logo from '@/components/brand/Logo'
+import Logo from '@/components/brand/Logo';
 
 const ERROR_MESSAGES = {
   login_failed: 'We couldn’t complete your sign-in. Please try again.',
@@ -17,14 +17,14 @@ const ERROR_MESSAGES = {
 const ROLE_STORAGE_KEY = 'ai-interview:last-role';
 
 const ROLE_CHOICES = [
-  { value: ROLES.CANDIDATE, label: 'Candidate', hint: 'Practice & take interviews', icon: GraduationCap },
+  { value: ROLES.CANDIDATE, label: 'Candidate', hint: 'Practice & take interviews', icon: UserRound },
   { value: ROLES.RECRUITER, label: 'Recruiter', hint: 'Approved accounts only', icon: BriefcaseBusiness },
 ];
 
 const HIGHLIGHTS = [
-  'Natural voice interviews run by an AI interviewer',
-  'Instant scored reports with strengths and gaps',
-  'Practice mode to track your improvement',
+  { icon: Zap, title: 'Natural voice interviews', text: 'run by an AI interviewer' },
+  { icon: BarChart3, title: 'Instant scored reports', text: 'with strengths and gaps' },
+  { icon: Target, title: 'Practice mode', text: 'to track your improvement' },
 ];
 
 function GoogleIcon() {
@@ -48,6 +48,7 @@ function Login() {
   const [password, setPassword] = useState('');
   const [emailLoading, setEmailLoading] = useState(false);
   const [role, setRole] = useState(ROLES.CANDIDATE);
+  const [showPassword, setShowPassword] = useState(false);
 
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
@@ -144,163 +145,244 @@ function Login() {
     }
   };
 
+  const inputClass =
+    'h-12 w-full rounded-xl border border-slate-200 bg-white pl-12 pr-4 text-[15px] text-slate-800 outline-none transition placeholder:text-slate-400 autofill:shadow-[inset_0_0_0_1000px_#fff] focus:border-orange-300 focus:ring-4 focus:ring-orange-50 short:h-11';
+  const labelClass = 'mb-1.5 block text-sm font-normal text-slate-600';
+  const fieldIcon = 'pointer-events-none absolute left-4 top-1/2 size-[18px] -translate-y-1/2 text-slate-400';
+
   return (
-    <main className="grid min-h-screen lg:grid-cols-2">
-      {/* Brand panel */}
-      <section className="relative hidden overflow-hidden bg-gradient-to-br from-violet-700 via-violet-600 to-fuchsia-500 p-12 text-white lg:flex lg:flex-col lg:justify-between">
-        <div className="pointer-events-none absolute -right-24 -top-24 size-96 rounded-full bg-white/10 blur-3xl" />
-        <div className="pointer-events-none absolute -bottom-32 -left-20 size-96 rounded-full bg-fuchsia-300/20 blur-3xl" />
+    // One screen on desktop: both panels are exactly the viewport height. Sizes follow the design
+    // at ~940px tall; the `short:` variant tightens spacing on shorter screens.
+    <main className="grid min-h-dvh bg-white lg:h-dvh lg:grid-cols-2 lg:overflow-hidden">
+      {/* ───────── Brand panel ───────── */}
+      <section className="relative hidden overflow-hidden bg-gradient-to-br from-[#fff8f2] via-[#fff3ea] to-[#fde8d8] lg:flex lg:flex-col">
+        {/* soft hill rising to the right, behind the robot */}
+        <svg
+          className="pointer-events-none absolute inset-0 h-full w-full"
+          viewBox="0 0 836 940"
+          preserveAspectRatio="none"
+          aria-hidden="true"
+        >
+          <defs>
+            <linearGradient id="auth-hill" x1="0" y1="0" x2="0" y2="1">
+              <stop offset="0" stopColor="#fcdcc2" stopOpacity="0.85" />
+              <stop offset="1" stopColor="#fde9da" stopOpacity="0.35" />
+            </linearGradient>
+          </defs>
+          <path d="M150 860 C 260 560, 520 400, 836 365 L 836 940 L 150 940 Z" fill="url(#auth-hill)" />
+        </svg>
 
-        <Link href="/" className="relative w-fit rounded-2xl bg-white/95 px-4 py-2 shadow-lg">
-          <Logo size="sm" />
-        </Link>
+        <div className="relative shrink-0 px-[12.5%] pt-10 short:pt-7">
+          <Link href="/" aria-label="AI Interview Labs home" className="inline-block">
+            <Logo priority className="w-[270px] short:w-[220px]" />
+          </Link>
 
-        <div className="relative max-w-md">
-          <h1 className="text-4xl font-bold leading-tight tracking-tight">
-            Interviews that run themselves.
+          <h1 className="mt-10 text-[clamp(2.5rem,3.85vw,4rem)] font-extrabold leading-[1.06] tracking-tight text-[#0f172a] short:mt-6 short:text-[clamp(2.25rem,3.2vw,3.25rem)]">
+            Interviews that run
+            <br />
+            <span className="text-orange-500">themselves.</span>
           </h1>
-          <p className="mt-4 text-lg text-violet-100">
+          <p className="mt-6 max-w-[440px] text-xl leading-relaxed text-slate-500 short:mt-3 short:text-lg">
             Hire faster as a recruiter, or practice until you’re confident as a candidate.
           </p>
-          <ul className="mt-8 space-y-3">
+        </div>
+
+        {/* Highlights and robot share the remaining height side by side (stacked on narrower
+            screens), so the robot can never cover the text. */}
+        <div className="relative flex min-h-0 flex-1 flex-col gap-4 pb-6 pl-[12.5%] pr-[5%] pt-9 xl:flex-row xl:items-stretch short:pt-5">
+          <ul className="shrink-0 space-y-[18px] short:space-y-3">
             {HIGHLIGHTS.map((item) => (
-              <li key={item} className="flex items-center gap-3 text-violet-50">
-                <CheckCircle2 className="size-5 shrink-0 text-fuchsia-200" />
-                {item}
+              <li key={item.title} className="flex items-center gap-5 short:gap-4">
+                <span className="flex size-[52px] shrink-0 items-center justify-center rounded-full bg-white/70 text-orange-500 ring-1 ring-orange-200 short:size-11">
+                  <item.icon className="size-[22px] short:size-5" />
+                </span>
+                <span>
+                  <span className="block text-[17px] font-medium text-slate-900">{item.title}</span>
+                  <span className="block text-sm text-slate-500">{item.text}</span>
+                </span>
               </li>
             ))}
           </ul>
-        </div>
 
-        <div className="relative overflow-hidden rounded-2xl border border-white/20 bg-white/10 p-2 shadow-2xl backdrop-blur">
-          <Image src="/login.png" alt="" width={708} height={456} className="h-auto w-full rounded-xl" />
+          <div className="relative min-h-0 min-w-0 flex-1 xl:-mt-6">
+            <Image
+              src="/Cheerful Robot Workspace Cutout.png"
+              alt="AI Interview Labs robot working at a laptop"
+              fill
+              priority
+              sizes="(min-width: 1280px) 30vw, 45vw"
+              className="object-contain object-bottom"
+            />
+          </div>
         </div>
       </section>
 
-      {/* Sign-in panel */}
-      <section className="flex items-center justify-center bg-slate-50 px-6 py-12">
-        <div className="w-full max-w-sm">
-          <div className="mb-8 flex justify-center lg:hidden"><Logo /></div>
+      {/* ───────── Sign-in panel ───────── */}
+      <section className="flex items-center justify-center px-6 py-10 sm:px-10 lg:overflow-y-auto short:lg:py-6">
+        <div className="w-full max-w-[458px]">
+          <Link href="/" className="mb-8 inline-block lg:hidden" aria-label="AI Interview Labs home">
+            <Logo />
+          </Link>
 
-          <div className="rounded-2xl border border-slate-200 bg-white p-8 shadow-xl shadow-slate-200/60">
-            <h2 className="text-2xl font-bold tracking-tight text-slate-900">
-              {mode === 'signin' ? 'Welcome back' : 'Create your account'}
-            </h2>
-            <p className="mt-1.5 text-sm text-slate-500">
-              {mode === 'signin' ? 'Sign in to continue to your workspace.' : 'It takes less than a minute.'}
-            </p>
+          <h2 className="text-[28px] font-semibold leading-tight tracking-tight text-[#0f172a] short:text-[26px]">
+            {mode === 'signin' ? 'Welcome back' : 'Create your account'}
+          </h2>
+          <p className="mt-2 text-lg text-slate-500 short:mt-1 short:text-base">
+            {mode === 'signin' ? 'Sign in to continue to your workspace.' : 'It takes less than a minute.'}
+          </p>
 
-            <div role="radiogroup" aria-label="Sign in as" className="mt-6 grid grid-cols-2 gap-2">
-              {ROLE_CHOICES.map((choice) => {
-                const selected = role === choice.value;
-                return (
-                  <button
-                    key={choice.value}
-                    type="button"
-                    role="radio"
-                    aria-checked={selected}
-                    onClick={() => chooseRole(choice.value)}
-                    className={cn(
-                      'flex cursor-pointer flex-col items-start rounded-xl border-2 p-3 text-left transition-all',
-                      selected ? 'border-violet-600 bg-violet-50' : 'border-slate-200 hover:border-violet-300'
-                    )}
-                  >
-                    <choice.icon className={cn('size-5', selected ? 'text-violet-600' : 'text-slate-400')} />
-                    <span className={cn('mt-2 text-sm font-semibold', selected ? 'text-violet-700' : 'text-slate-800')}>{choice.label}</span>
-                    <span className="text-xs text-slate-500">{choice.hint}</span>
-                  </button>
-                );
-              })}
+          <div role="radiogroup" aria-label="Sign in as" className="mt-10 grid grid-cols-2 gap-5 short:mt-6 short:gap-4">
+            {ROLE_CHOICES.map((choice) => {
+              const selected = role === choice.value;
+              return (
+                <button
+                  key={choice.value}
+                  type="button"
+                  role="radio"
+                  aria-checked={selected}
+                  onClick={() => chooseRole(choice.value)}
+                  className={cn(
+                    'relative flex min-h-[136px] cursor-pointer flex-col items-start rounded-2xl border p-5 text-left transition-all short:min-h-0 short:p-4',
+                    selected
+                      ? 'border-orange-400 bg-orange-50/30 shadow-sm'
+                      : 'border-slate-200 bg-slate-50/40 hover:border-orange-200'
+                  )}
+                >
+                  {selected && (
+                    <span className="absolute right-4 top-4 flex size-5 items-center justify-center rounded-full bg-orange-500 text-white">
+                      <Check className="size-3" strokeWidth={3} />
+                    </span>
+                  )}
+                  <span className={cn(
+                    'flex size-10 items-center justify-center rounded-full',
+                    selected ? 'bg-orange-100 text-orange-600' : 'bg-slate-100 text-slate-500'
+                  )}>
+                    <choice.icon className="size-5" />
+                  </span>
+                  <span className="mt-3 text-base font-medium text-slate-900">{choice.label}</span>
+                  <span className="mt-0.5 text-sm leading-snug text-slate-500">{choice.hint}</span>
+                </button>
+              );
+            })}
+          </div>
+
+          <button
+            type="button"
+            onClick={signInWithGoogle}
+            disabled={loading || emailLoading}
+            className="mt-6 flex h-12 w-full cursor-pointer items-center justify-center gap-3 rounded-xl border border-slate-200 bg-white text-[15px] font-normal text-slate-700 transition-all hover:border-slate-300 hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-60 short:mt-4 short:h-11"
+          >
+            {loading ? <Loader2 className="size-5 animate-spin" /> : <GoogleIcon />}
+            {loading ? 'Redirecting to Google…' : 'Continue with Google'}
+          </button>
+
+          <div className="my-8 flex items-center gap-5 text-xs font-medium uppercase tracking-wider text-slate-400 short:my-4">
+            <span className="h-px flex-1 bg-slate-200" /> or with email <span className="h-px flex-1 bg-slate-200" />
+          </div>
+
+          <form onSubmit={submitEmailForm}>
+            {mode === 'signup' && (
+              <div className="mb-5 short:mb-3">
+                <label htmlFor="auth-name" className={labelClass}>Full name</label>
+                <div className="relative">
+                  <UserRound className={fieldIcon} />
+                  <input
+                    id="auth-name"
+                    required
+                    value={name}
+                    onChange={(event) => setName(event.target.value)}
+                    placeholder="Your full name"
+                    autoComplete="name"
+                    className={inputClass}
+                  />
+                </div>
+              </div>
+            )}
+            <div>
+              <label htmlFor="auth-email" className={labelClass}>Email address</label>
+              <div className="relative">
+                <Mail className={fieldIcon} />
+                <input
+                  id="auth-email"
+                  required
+                  type="email"
+                  value={email}
+                  onChange={(event) => setEmail(event.target.value)}
+                  placeholder="you@example.com"
+                  autoComplete="email"
+                  className={inputClass}
+                />
+              </div>
+            </div>
+            <div className="mt-5 short:mt-3">
+              <label htmlFor="auth-password" className={labelClass}>Password</label>
+              <div className="relative">
+                <Lock className={fieldIcon} />
+                <input
+                  id="auth-password"
+                  required
+                  type={showPassword ? 'text' : 'password'}
+                  minLength={6}
+                  value={password}
+                  onChange={(event) => setPassword(event.target.value)}
+                  placeholder={mode === 'signup' ? 'At least 6 characters' : 'Enter your password'}
+                  autoComplete={mode === 'signup' ? 'new-password' : 'current-password'}
+                  className={cn(inputClass, 'pr-12')}
+                />
+                <button
+                  type="button"
+                  onClick={() => setShowPassword((value) => !value)}
+                  aria-label={showPassword ? 'Hide password' : 'Show password'}
+                  className="absolute right-3 top-1/2 flex size-8 -translate-y-1/2 cursor-pointer items-center justify-center rounded-md text-slate-400 hover:text-slate-700"
+                >
+                  {showPassword ? <EyeOff className="size-[18px]" /> : <Eye className="size-[18px]" />}
+                </button>
+              </div>
             </div>
 
             <button
-              type="button"
-              onClick={signInWithGoogle}
-              disabled={loading || emailLoading}
-              className="mt-5 flex h-11 w-full cursor-pointer items-center justify-center gap-3 rounded-xl border border-slate-300 bg-white text-sm font-medium text-slate-700 shadow-sm transition-all hover:border-slate-400 hover:bg-slate-50 hover:shadow disabled:cursor-not-allowed disabled:opacity-60"
+              type="submit"
+              disabled={emailLoading || loading}
+              className="mt-5 flex h-12 w-full cursor-pointer items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-[#ff7a1a] to-[#e8590c] text-[15px] font-medium text-white shadow-md shadow-orange-500/20 transition-all hover:shadow-lg hover:shadow-orange-500/30 disabled:cursor-not-allowed disabled:opacity-60 short:mt-4 short:h-11"
             >
-              {loading ? <Loader2 className="size-5 animate-spin" /> : <GoogleIcon />}
-              {loading ? 'Redirecting to Google…' : 'Continue with Google'}
+              {emailLoading && <Loader2 className="size-4 animate-spin" />}
+              {mode === 'signin' ? 'Sign in' : 'Create account'}
+              {!emailLoading && <ArrowRight className="size-4" />}
             </button>
+          </form>
 
-            <div className="my-6 flex items-center gap-3 text-xs font-medium uppercase tracking-wider text-slate-400">
-              <span className="h-px flex-1 bg-slate-200" /> or with email <span className="h-px flex-1 bg-slate-200" />
-            </div>
-
-            <form onSubmit={submitEmailForm} className="space-y-3">
-              {mode === 'signup' && (
-                <input
-                  required
-                  value={name}
-                  onChange={(event) => setName(event.target.value)}
-                  placeholder="Full name"
-                  autoComplete="name"
-                  className="h-11 w-full rounded-xl border border-slate-300 px-3.5 text-sm outline-none transition focus:border-violet-500 focus:ring-3 focus:ring-violet-100"
-                />
-              )}
-              <input
-                required
-                type="email"
-                value={email}
-                onChange={(event) => setEmail(event.target.value)}
-                placeholder="you@example.com"
-                autoComplete="email"
-                className="h-11 w-full rounded-xl border border-slate-300 px-3.5 text-sm outline-none transition focus:border-violet-500 focus:ring-3 focus:ring-violet-100"
-              />
-              <input
-                required
-                type="password"
-                minLength={6}
-                value={password}
-                onChange={(event) => setPassword(event.target.value)}
-                placeholder={mode === 'signup' ? 'Password (min. 6 characters)' : 'Password'}
-                autoComplete={mode === 'signup' ? 'new-password' : 'current-password'}
-                className="h-11 w-full rounded-xl border border-slate-300 px-3.5 text-sm outline-none transition focus:border-violet-500 focus:ring-3 focus:ring-violet-100"
-              />
-              <button
-                type="submit"
-                disabled={emailLoading || loading}
-                className="flex h-11 w-full cursor-pointer items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-violet-600 to-fuchsia-500 text-sm font-medium text-white shadow-md shadow-violet-500/25 transition-all hover:shadow-lg hover:shadow-violet-500/30 disabled:cursor-not-allowed disabled:opacity-60"
-              >
-                {emailLoading && <Loader2 className="size-4 animate-spin" />}
-                {mode === 'signin' ? 'Sign in' : 'Create account'}
-              </button>
-            </form>
-
-            {errorMessage && (
-              <p role="alert" className="mt-4 rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700">
-                {errorMessage}
-              </p>
-            )}
-            {infoMessage && (
-              <p role="status" className="mt-4 rounded-lg border border-emerald-200 bg-emerald-50 px-3 py-2 text-sm text-emerald-700">
-                {infoMessage}
-              </p>
-            )}
-
-            <p className="mt-6 text-center text-sm text-slate-500">
-              {mode === 'signin' ? 'New here?' : 'Already have an account?'}{' '}
-              <button
-                type="button"
-                onClick={() => {
-                  setMode(mode === 'signin' ? 'signup' : 'signin');
-                  setErrorMessage('');
-                  setInfoMessage('');
-                }}
-                className="cursor-pointer font-medium text-violet-600 hover:text-violet-700"
-              >
-                {mode === 'signin' ? 'Create an account' : 'Sign in'}
-              </button>
+          {errorMessage && (
+            <p role="alert" className="mt-4 rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700 short:mt-3">
+              {errorMessage}
             </p>
-
-            <p className="mt-6 text-center text-xs text-slate-400">
-              You can switch between workspaces any time from the sidebar.
+          )}
+          {infoMessage && (
+            <p role="status" className="mt-4 rounded-xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm text-emerald-700 short:mt-3">
+              {infoMessage}
             </p>
-          </div>
+          )}
 
-          <p className="mt-6 text-center text-sm text-slate-500">
-            <Link href="/" className="font-medium text-violet-600 hover:text-violet-700">← Back to home</Link>
+          <p className="mt-6 text-center text-sm text-slate-600 short:mt-4">
+            {mode === 'signin' ? 'New here?' : 'Already have an account?'}{' '}
+            <button
+              type="button"
+              onClick={() => {
+                setMode(mode === 'signin' ? 'signup' : 'signin');
+                setErrorMessage('');
+                setInfoMessage('');
+              }}
+              className="cursor-pointer font-medium text-orange-600 hover:text-orange-700"
+            >
+              {mode === 'signin' ? 'Create an account' : 'Sign in'}
+            </button>
           </p>
+
+          <div className="mt-8 border-t border-slate-200 pt-6 short:mt-4 short:pt-4">
+            <div className="mx-auto flex max-w-[280px] items-center gap-4 text-xs leading-relaxed text-slate-500">
+              <ArrowLeftRight className="size-5 shrink-0 text-slate-500" />
+              <p>You can switch between workspaces anytime from the sidebar menu.</p>
+            </div>
+          </div>
         </div>
       </section>
     </main>

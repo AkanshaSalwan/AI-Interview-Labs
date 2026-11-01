@@ -3,6 +3,8 @@
 @import "shadcn/tailwind.css";
 
 @custom-variant dark (&:is(.dark *));
+/* Short viewports (e.g. 768px laptops): used to tighten one-screen layouts like /auth. */
+@custom-variant short (@media (max-height: 900px));
 
 
 @layer base {
