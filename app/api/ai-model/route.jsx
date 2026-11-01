@@ -16,11 +16,23 @@ export async function POST(request) {
         const duration = body.duration || body.interviewDuration;
         const type = body.type || body.types;
 
-        const FINAL_PROMPT = QUESTIONS_PROMPT
+        const difficulty = body.difficulty;
+        const resumeText = typeof body.resumeText === "string" ? body.resumeText.slice(0, 12000) : "";
+
+        let FINAL_PROMPT = QUESTIONS_PROMPT
             .replaceAll("{{jobTitle}}", jobPosition ?? "")
             .replaceAll("{{jobDescription}}", jobDescription ?? "")
             .replaceAll("{{duration}}", duration ?? "")
             .replaceAll("{{type}}", Array.isArray(type) ? type.join(", ") : (type ?? ""));
+
+        if (difficulty) {
+            FINAL_PROMPT += `\n\nDifficulty level: ${difficulty}. Pitch every question at this level.`;
+        }
+        if (resumeText) {
+            FINAL_PROMPT +=
+                "\n\nCandidate resume (base most questions on the projects, skills and experience it lists; " +
+                "ask the candidate to explain their own work in depth):\n\"\"\"\n" + resumeText + "\n\"\"\"";
+        }
 
         const openai = new OpenAI({
             baseURL: "https://openrouter.ai/api/v1",

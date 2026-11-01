@@ -4,11 +4,12 @@ import { CalendarDays, Clock, Copy, Send } from 'lucide-react'
 import moment from 'moment/moment'
 import React from 'react'
 import { toast } from '@/components/ui/toast'
+import { interviewUrl, openInviteEmail } from '@/services/interviewLinks'
 
 
 function InterviewCard({ interview }) {
 
-    const url = `${process.env.NEXT_PUBLIC_HOST_URL?.replace(/\/+$/, '')}/${interview?.interview_id}`
+    const url = interviewUrl(interview?.interview_id)
     const types = String(interview?.type ?? '').split(',').map((type) => type.trim()).filter(Boolean)
 
     const copyLink = async () => {
@@ -16,9 +17,7 @@ function InterviewCard({ interview }) {
         toast.add({ title: 'Link Copied to Clipboard' })
     }
     const onSend = () => {
-        const subject = encodeURIComponent(`Interview invitation: ${interview?.jobPosition ?? 'AI Interview'}`)
-        const body = encodeURIComponent(`Hi,\n\nYou're invited to an AI interview. Start it here when you're ready:\n${url}\n\nGood luck!`)
-        window.location.href = `mailto:?subject=${subject}&body=${body}`
+        openInviteEmail({ jobPosition: interview?.jobPosition, interviewId: interview?.interview_id })
     }
 
     return (

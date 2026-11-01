@@ -71,17 +71,10 @@ function Provider({ children }) {
             })
         }
 
+        // Fires once on load with the current session (INITIAL_SESSION, or null when signed out),
+        // then on every sign-in, sign-out and token refresh.
         const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
             setTimeout(() => handleUser(session?.user ?? null), 0)
-        })
-
-        supabase.auth.getUser().then(({ data: { user: authenticatedUser }, error }) => {
-            if (error) {
-                throw error
-            }
-            handleUser(authenticatedUser)
-        }).catch((error) => {
-            console.error('Unable to retrieve the Supabase user:', error)
         })
 
         return () => subscription.unsubscribe()

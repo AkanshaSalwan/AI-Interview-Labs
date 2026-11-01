@@ -21,3 +21,22 @@ export function isRecommended(feedbackRow) {
   if (typeof feedbackRow?.recommended === 'boolean') return feedbackRow.recommended
   return String(feedbackRow?.feedback?.recommendation ?? '').toLowerCase() === 'recommended'
 }
+
+// The four skills every feedback report rates, in display order.
+export const SKILLS = [
+  { key: 'technicalSkills', label: 'Technical skills' },
+  { key: 'communication', label: 'Communication' },
+  { key: 'problemSolving', label: 'Problem solving' },
+  { key: 'experience', label: 'Experience' },
+]
+
+export function skillScore(feedbackRow, key) {
+  const value = Number(feedbackRow?.feedback?.rating?.[key])
+  return Number.isFinite(value) ? value : null
+}
+
+export function mean(values) {
+  const numbers = values.filter((value) => Number.isFinite(value))
+  if (!numbers.length) return null
+  return Math.round((numbers.reduce((sum, value) => sum + value, 0) / numbers.length) * 10) / 10
+}

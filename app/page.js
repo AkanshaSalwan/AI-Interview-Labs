@@ -188,10 +188,10 @@ export default function Home() {
               voice interviewer. Candidates rehearse with the same AI and watch their scores climb.
             </p>
             <div className="mt-10 flex flex-col gap-3 sm:flex-row">
-              <Link href="/auth" className={primaryCta}>
+              <Link href="/auth?role=recruiter" className={primaryCta}>
                 <BriefcaseBusiness className="size-5" /> I’m hiring
               </Link>
-              <Link href="/auth" className={secondaryCta}>
+              <Link href="/auth?role=candidate" className={secondaryCta}>
                 <GraduationCap className="size-5" /> I’m preparing for interviews
               </Link>
             </div>

@@ -2,14 +2,23 @@
 import { useEffect, useState } from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
-import { CheckCircle2, Loader2 } from 'lucide-react';
+import { BriefcaseBusiness, CheckCircle2, GraduationCap, Loader2 } from 'lucide-react';
 import { createClient } from '@/services/supabaseClient.js';
-import { safeNextPath } from '@/services/roles';
+import { ROLES, canAccess, homeForRole, safeNextPath } from '@/services/roles';
+import { RECRUITER_NOT_APPROVED_NOTICE, saveRoleOrFallBackToCandidate } from '@/services/userProfile';
+import { cn } from '@/lib/utils';
 
 const ERROR_MESSAGES = {
   login_failed: 'We couldn’t complete your sign-in. Please try again.',
   missing_code: 'The sign-in link was incomplete. Please try again.',
 };
+
+const ROLE_STORAGE_KEY = 'ai-interview:last-role';
+
+const ROLE_CHOICES = [
+  { value: ROLES.CANDIDATE, label: 'Candidate', hint: 'Practice & take interviews', icon: GraduationCap },
+  { value: ROLES.RECRUITER, label: 'Recruiter', hint: 'Approved accounts only', icon: BriefcaseBusiness },
+];
 
 const HIGHLIGHTS = [
   'Natural voice interviews run by an AI interviewer',
@@ -31,23 +40,100 @@ function GoogleIcon() {
 function Login() {
   const [loading, setLoading] = useState(false);
   const [errorMessage, setErrorMessage] = useState('');
+  const [infoMessage, setInfoMessage] = useState('');
+  const [mode, setMode] = useState('signin'); // 'signin' | 'signup'
+  const [name, setName] = useState('');
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
+  const [emailLoading, setEmailLoading] = useState(false);
+  const [role, setRole] = useState(ROLES.CANDIDATE);
 
   useEffect(() => {
-    const code = new URLSearchParams(window.location.search).get('error');
+    const params = new URLSearchParams(window.location.search);
+    const code = params.get('error');
     if (code) setErrorMessage(ERROR_MESSAGES[code] ?? ERROR_MESSAGES.login_failed);
+
+    // Preselect the role from the landing page (?role=) or the last one used on this device.
+    const preferred = params.get('role') ?? window.localStorage.getItem(ROLE_STORAGE_KEY);
+    if (Object.values(ROLES).includes(preferred)) setRole(preferred);
   }, []);
+
+  const chooseRole = (value) => {
+    setRole(value);
+    window.localStorage.setItem(ROLE_STORAGE_KEY, value);
+  };
+
+  const nextPath = () => safeNextPath(new URLSearchParams(window.location.search).get('next'));
+
+  const callbackUrl = () => {
+    const url = new URL('/auth/callback', window.location.origin);
+    url.searchParams.set('role', role);
+    const next = nextPath();
+    if (next) url.searchParams.set('next', next);
+    return url;
+  };
+
+  // Save the chosen workspace, then open it. Unapproved recruiters land in the candidate workspace.
+  const enterWorkspace = async (supabase, authUser) => {
+    const { profile, recruiterDenied } = await saveRoleOrFallBackToCandidate(supabase, authUser, role);
+    if (recruiterDenied) {
+      window.location.assign(`${homeForRole(profile.role)}?notice=${RECRUITER_NOT_APPROVED_NOTICE}`);
+      return;
+    }
+    const next = nextPath();
+    window.location.assign(next && canAccess(profile.role, next) ? next : homeForRole(profile.role));
+  };
+
+  const submitEmailForm = async (event) => {
+    event.preventDefault();
+    setErrorMessage('');
+    setInfoMessage('');
+    setEmailLoading(true);
+
+    const supabase = createClient();
+    const credentials = { email: email.trim(), password };
+
+    try {
+      if (mode === 'signin') {
+        const { data, error } = await supabase.auth.signInWithPassword(credentials);
+        if (error) {
+          throw new Error(error.message === 'Invalid login credentials' ? 'Wrong email or password.' : error.message);
+        }
+        await enterWorkspace(supabase, data.user);
+        return;
+      }
+
+      const { data, error } = await supabase.auth.signUp({
+        ...credentials,
+        options: {
+          data: { name: name.trim() },
+          emailRedirectTo: callbackUrl().toString(),
+        },
+      });
+      if (error) throw error;
+
+      if (data.session) {
+        await enterWorkspace(supabase, data.user);
+        return;
+      }
+      // "Confirm email" is on in Supabase: the link in the email finishes sign-up via /auth/callback.
+      setInfoMessage(`We sent a confirmation link to ${credentials.email}. Open it to finish creating your account.`);
+      setMode('signin');
+      setPassword('');
+      setEmailLoading(false);
+    } catch (error) {
+      setErrorMessage(error?.message || 'Something went wrong. Please try again.');
+      setEmailLoading(false);
+    }
+  };
 
   const signInWithGoogle = async () => {
     setLoading(true);
     setErrorMessage('');
 
-    const next = safeNextPath(new URLSearchParams(window.location.search).get('next'));
-    const callbackUrl = new URL('/auth/callback', window.location.origin);
-    if (next) callbackUrl.searchParams.set('next', next);
-
     const { error } = await createClient().auth.signInWithOAuth({
       provider: 'google',
-      options: { redirectTo: callbackUrl.toString() },
+      options: { redirectTo: callbackUrl().toString() },
     });
 
     if (error) {
@@ -102,29 +188,118 @@ function Login() {
           />
 
           <div className="rounded-2xl border border-slate-200 bg-white p-8 shadow-xl shadow-slate-200/60">
-            <h2 className="text-2xl font-bold tracking-tight text-slate-900">Welcome</h2>
+            <h2 className="text-2xl font-bold tracking-tight text-slate-900">
+              {mode === 'signin' ? 'Welcome back' : 'Create your account'}
+            </h2>
             <p className="mt-1.5 text-sm text-slate-500">
-              Sign in to continue to your workspace.
+              {mode === 'signin' ? 'Sign in to continue to your workspace.' : 'It takes less than a minute.'}
             </p>
+
+            <div role="radiogroup" aria-label="Sign in as" className="mt-6 grid grid-cols-2 gap-2">
+              {ROLE_CHOICES.map((choice) => {
+                const selected = role === choice.value;
+                return (
+                  <button
+                    key={choice.value}
+                    type="button"
+                    role="radio"
+                    aria-checked={selected}
+                    onClick={() => chooseRole(choice.value)}
+                    className={cn(
+                      'flex cursor-pointer flex-col items-start rounded-xl border-2 p-3 text-left transition-all',
+                      selected ? 'border-violet-600 bg-violet-50' : 'border-slate-200 hover:border-violet-300'
+                    )}
+                  >
+                    <choice.icon className={cn('size-5', selected ? 'text-violet-600' : 'text-slate-400')} />
+                    <span className={cn('mt-2 text-sm font-semibold', selected ? 'text-violet-700' : 'text-slate-800')}>{choice.label}</span>
+                    <span className="text-xs text-slate-500">{choice.hint}</span>
+                  </button>
+                );
+              })}
+            </div>
 
             <button
               type="button"
               onClick={signInWithGoogle}
-              disabled={loading}
-              className="mt-8 flex h-11 w-full cursor-pointer items-center justify-center gap-3 rounded-xl border border-slate-300 bg-white text-sm font-medium text-slate-700 shadow-sm transition-all hover:border-slate-400 hover:bg-slate-50 hover:shadow disabled:cursor-not-allowed disabled:opacity-60"
+              disabled={loading || emailLoading}
+              className="mt-5 flex h-11 w-full cursor-pointer items-center justify-center gap-3 rounded-xl border border-slate-300 bg-white text-sm font-medium text-slate-700 shadow-sm transition-all hover:border-slate-400 hover:bg-slate-50 hover:shadow disabled:cursor-not-allowed disabled:opacity-60"
             >
               {loading ? <Loader2 className="size-5 animate-spin" /> : <GoogleIcon />}
               {loading ? 'Redirecting to Google…' : 'Continue with Google'}
             </button>
+
+            <div className="my-6 flex items-center gap-3 text-xs font-medium uppercase tracking-wider text-slate-400">
+              <span className="h-px flex-1 bg-slate-200" /> or with email <span className="h-px flex-1 bg-slate-200" />
+            </div>
+
+            <form onSubmit={submitEmailForm} className="space-y-3">
+              {mode === 'signup' && (
+                <input
+                  required
+                  value={name}
+                  onChange={(event) => setName(event.target.value)}
+                  placeholder="Full name"
+                  autoComplete="name"
+                  className="h-11 w-full rounded-xl border border-slate-300 px-3.5 text-sm outline-none transition focus:border-violet-500 focus:ring-3 focus:ring-violet-100"
+                />
+              )}
+              <input
+                required
+                type="email"
+                value={email}
+                onChange={(event) => setEmail(event.target.value)}
+                placeholder="you@example.com"
+                autoComplete="email"
+                className="h-11 w-full rounded-xl border border-slate-300 px-3.5 text-sm outline-none transition focus:border-violet-500 focus:ring-3 focus:ring-violet-100"
+              />
+              <input
+                required
+                type="password"
+                minLength={6}
+                value={password}
+                onChange={(event) => setPassword(event.target.value)}
+                placeholder={mode === 'signup' ? 'Password (min. 6 characters)' : 'Password'}
+                autoComplete={mode === 'signup' ? 'new-password' : 'current-password'}
+                className="h-11 w-full rounded-xl border border-slate-300 px-3.5 text-sm outline-none transition focus:border-violet-500 focus:ring-3 focus:ring-violet-100"
+              />
+              <button
+                type="submit"
+                disabled={emailLoading || loading}
+                className="flex h-11 w-full cursor-pointer items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-violet-600 to-fuchsia-500 text-sm font-medium text-white shadow-md shadow-violet-500/25 transition-all hover:shadow-lg hover:shadow-violet-500/30 disabled:cursor-not-allowed disabled:opacity-60"
+              >
+                {emailLoading && <Loader2 className="size-4 animate-spin" />}
+                {mode === 'signin' ? 'Sign in' : 'Create account'}
+              </button>
+            </form>
 
             {errorMessage && (
               <p role="alert" className="mt-4 rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700">
                 {errorMessage}
               </p>
             )}
+            {infoMessage && (
+              <p role="status" className="mt-4 rounded-lg border border-emerald-200 bg-emerald-50 px-3 py-2 text-sm text-emerald-700">
+                {infoMessage}
+              </p>
+            )}
+
+            <p className="mt-6 text-center text-sm text-slate-500">
+              {mode === 'signin' ? 'New here?' : 'Already have an account?'}{' '}
+              <button
+                type="button"
+                onClick={() => {
+                  setMode(mode === 'signin' ? 'signup' : 'signin');
+                  setErrorMessage('');
+                  setInfoMessage('');
+                }}
+                className="cursor-pointer font-medium text-violet-600 hover:text-violet-700"
+              >
+                {mode === 'signin' ? 'Create an account' : 'Sign in'}
+              </button>
+            </p>
 
             <p className="mt-6 text-center text-xs text-slate-400">
-              New here? You’ll choose whether you’re a recruiter or a candidate after signing in.
+              You can switch between workspaces any time from the sidebar.
             </p>
           </div>
 

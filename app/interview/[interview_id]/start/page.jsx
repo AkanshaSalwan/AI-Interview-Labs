@@ -8,7 +8,7 @@ import AlertConfirmation from './_components/AlertConfirmation'
 import { Button } from '@/components/ui/button'
 import { toast } from '@/components/ui/toast'
 import axios from 'axios'
-import { useParams } from 'next/navigation'
+import { useParams, useRouter } from 'next/navigation'
 
 
 const DAILY_NOISE_PATTERNS = [
@@ -102,6 +102,7 @@ function formatDuration(totalSeconds) {
 function StartInterview() {
   const { interviewInfo } = useContext(InterviewDataContext)
   const { interview_id: interviewId } = useParams()
+  const router = useRouter()
   const vapiRef = useRef(null)
   const interviewInfoRef = useRef(interviewInfo)
   const callActiveRef = useRef(false)
@@ -288,7 +289,7 @@ Begin the conversation with a friendly introduction, setting a relaxed yet profe
 Ask one question at a time and wait for the candidate's response before proceeding. Keep the questions clear and concise. Below Are the questions ask one by one:
 Questions: ${questionList}
 If the candidate struggles, offer hints or rephrase the question without giving away the answer. Example:
-"Need a hint? Think about how React tracks component updates!"
+"Need a hint? Think about the main trade-offs involved here!"
 Provide brief, encouraging feedback after each answer. Example:
 "Nice! That's a solid answer."
 "Hmm, not quite! Want to try again?"
@@ -301,7 +302,7 @@ Key Guidelines:
 ✅ Be friendly, engaging, and witty 🎤
 ✅ Keep responses short and natural, like a real conversation
 ✅ Adapt based on the candidate's confidence level
-✅ Ensure the interview remains focused on React
+✅ Ensure the interview remains focused on the ${interviewInfo?.interviewData?.jobPosition} role
 `.trim(),
           },
         ],
@@ -403,11 +404,15 @@ Key Guidelines:
       }
 
       feedbackSavedRef.current = true
-      console.log('Saved interview feedback:', result.data?.saved)
 
       setFeedback(feedbackData)
       setStatusText('Interview feedback is ready')
       toast.add({ title: 'Interview feedback generated.' })
+
+      const savedId = result.data?.saved?.[0]?.id
+      if (savedId) {
+        router.push(`/interview/${interviewId}/completed?feedback=${savedId}`)
+      }
     } catch (error) {
       console.error('Unable to generate interview feedback:', error)
       setStatusText('Interview ended, but feedback could not be generated.')

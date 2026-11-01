@@ -7,7 +7,7 @@ import { Input } from '@/components/ui/input'
 import { Button } from '@/components/ui/button'
 import { InterviewDataContext } from '@/context/InterviewDataContext'
 import { createClient } from '@/services/supabaseClient'
-import QuestionList from '@/app/(main)/dashboard/create-interview/_components/QuestionList'
+import { useUser } from '@/app/provider'
 
 
 
@@ -23,6 +23,13 @@ function Interview() {
     const { interviewInfo, setInterviewInfo } = useContext(InterviewDataContext);
     const router = useRouter();
     const [loading, setLoading] = useState(false);
+    const { user } = useUser();
+
+    // Signed-in users (e.g. candidates practising) don't need to retype their details.
+    useEffect(() => {
+        if (user?.name) setUserName((current) => current || user.name);
+        if (user?.email) setUserEmail((current) => current || user.email);
+    }, [user?.name, user?.email]);
 
     useEffect(() => {
         if (!interview_id) {
@@ -33,11 +40,8 @@ function Interview() {
 
         const getInterviewDetails = async () => {
             try {
-                const { data, error } = await supabase
-                    .from('interviews')
-                    .select('jobPosition, jobDescription, duration, type')
-                    .eq('interview_id', interview_id)
-                    .maybeSingle();
+                // Interviews are protected by RLS; this function returns one interview's public fields by id.
+                const { data, error } = await supabase.rpc('get_interview_public', { p_interview_id: interview_id });
 
                 if (error) {
                     throw error;
@@ -65,11 +69,7 @@ function Interview() {
         setJoinError('');
 
         try {
-            const { data, error } = await supabase
-                .from('interviews')
-                .select('*')
-                .eq('interview_id', interview_id)
-                .maybeSingle();
+            const { data, error } = await supabase.rpc('get_interview_public', { p_interview_id: interview_id });
 
             if (error) {
                 throw error;
@@ -138,6 +138,7 @@ function Interview() {
                     <Input
                         id='candidate-name'
                         placeholder='e.g., John Smith'
+                        value={userName}
                         onChange={(event) => setUserName(event.target.value)}
                         className='h-10 w-full rounded-md border border-slate-300 bg-white px-3 text-sm text-slate-700 shadow-none placeholder:text-slate-400 focus-visible:border-slate-400 focus-visible:ring-0 focus-visible:ring-offset-0'
                     />
@@ -148,7 +149,9 @@ function Interview() {
                     </label>
                     <Input
                         id='candidate-email'
-                        placeholder='e.g., John Smith@gmail.com'
+                        placeholder='e.g., john.smith@gmail.com'
+                        type='email'
+                        value={userEmail}
                         onChange={(event) => setUserEmail(event.target.value)}
                         className='h-10 w-full rounded-md border border-slate-300 bg-white px-3 text-sm text-slate-700 shadow-none placeholder:text-slate-400 focus-visible:border-slate-400 focus-visible:ring-0 focus-visible:ring-offset-0'
                     />
@@ -178,7 +181,7 @@ function Interview() {
                         }
                         onClick={onJoinInterview}
                     >
-                        <Video /> {loading && <Loader2Icon />}
+                        {loading ? <Loader2Icon className='animate-spin' /> : <Video />}
                         Join Interview
                     </Button>
                     {joinError && (

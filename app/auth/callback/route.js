@@ -1,13 +1,15 @@
 import { NextResponse } from 'next/server'
 import { createSupabaseServerClient } from '@/services/supabaseServer'
-import { canAccess, homeForRole, safeNextPath } from '@/services/roles'
+import { ROLES, canAccess, homeForRole, safeNextPath } from '@/services/roles'
+import { RECRUITER_NOT_APPROVED_NOTICE, saveRoleOrFallBackToCandidate } from '@/services/userProfile'
 
-// Google OAuth lands here: swap the code for a session, make sure a Users row
-// exists, then send the user to their role's home (or onboarding).
+// Google OAuth and email-confirmation links land here: swap the code for a session,
+// apply the role picked on the sign-in page, then send the user to that workspace.
 export async function GET(request) {
   const { searchParams, origin } = new URL(request.url)
   const code = searchParams.get('code')
   const next = safeNextPath(searchParams.get('next'))
+  const requestedRole = Object.values(ROLES).includes(searchParams.get('role')) ? searchParams.get('role') : null
 
   if (!code) {
     return NextResponse.redirect(`${origin}/auth?error=missing_code`)
@@ -21,29 +23,26 @@ export async function GET(request) {
     return NextResponse.redirect(`${origin}/auth?error=login_failed`)
   }
 
-  const authUser = data.user
-  const { data: existingUser, error: lookupError } = await supabase
-    .from('Users')
-    .select('role')
-    .eq('email', authUser.email)
-    .maybeSingle()
-
-  if (lookupError) {
-    console.error('Unable to look up user:', lookupError)
-  }
-
-  if (!existingUser && !lookupError) {
-    const { error: insertError } = await supabase.from('Users').insert([{
-      name: authUser.user_metadata?.name ?? authUser.user_metadata?.full_name,
-      email: authUser.email,
-      picture: authUser.user_metadata?.picture ?? authUser.user_metadata?.avatar_url,
-    }])
-    if (insertError) {
-      console.error('Unable to create user record:', insertError)
+  let role = null
+  try {
+    if (requestedRole) {
+      const { profile, recruiterDenied } = await saveRoleOrFallBackToCandidate(supabase, data.user, requestedRole)
+      if (recruiterDenied) {
+        return NextResponse.redirect(`${origin}${homeForRole(profile.role)}?notice=${RECRUITER_NOT_APPROVED_NOTICE}`)
+      }
+      role = profile.role
+    } else {
+      const { data: existingUser } = await supabase
+        .from('Users')
+        .select('role')
+        .eq('email', data.user.email)
+        .maybeSingle()
+      role = existingUser?.role ?? null
     }
+  } catch (profileError) {
+    console.error('Unable to save the user profile:', profileError)
   }
 
-  const role = existingUser?.role
   if (!role) {
     return NextResponse.redirect(`${origin}/onboarding`)
   }

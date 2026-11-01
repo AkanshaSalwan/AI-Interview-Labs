@@ -64,7 +64,21 @@ export async function proxy(request) {
     .select('role')
     .eq('email', claims.email)
     .maybeSingle()
-  const role = profile?.role
+  let role = profile?.role
+
+  // Recruiter access must be approved (migration 005). If it was revoked, move the user to the candidate workspace.
+  if (role === 'recruiter') {
+    const { data: approved, error: approvalError } = await supabase.rpc('is_approved_recruiter')
+    if (approvalError) {
+      console.error('Recruiter approval check failed:', approvalError.message)
+    } else if (!approved) {
+      await supabase.from('Users').update({ role: 'candidate' }).eq('email', claims.email)
+      role = 'candidate'
+      if (!canAccess(role, pathname)) {
+        return redirectTo(homeForRole(role), { notice: 'recruiter_not_approved' })
+      }
+    }
+  }
 
   if (!role) {
     return pathname === '/onboarding' ? response : redirectTo('/onboarding')

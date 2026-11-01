@@ -6,6 +6,7 @@ import { ArrowRight, BriefcaseBusiness, Check, GraduationCap, Loader2 } from 'lu
 import { createClient } from '@/services/supabaseClient'
 import { useUser } from '@/app/provider'
 import { ROLES, homeForRole } from '@/services/roles'
+import { isRecruiterNotApproved, saveActiveRole } from '@/services/userProfile'
 import { toast } from '@/components/ui/toast'
 import { cn } from '@/lib/utils'
 
@@ -14,7 +15,7 @@ const ROLE_OPTIONS = [
     value: ROLES.RECRUITER,
     icon: BriefcaseBusiness,
     title: 'I’m hiring',
-    subtitle: 'Recruiter / HR',
+    subtitle: 'Recruiter / HR · approval required',
     points: [
       'Create AI voice interviews in minutes',
       'Invite candidates with a single link',
@@ -49,31 +50,7 @@ function Onboarding() {
       const { data: { user: authUser }, error: authError } = await supabase.auth.getUser()
       if (authError || !authUser?.email) throw authError ?? new Error('You are not signed in.')
 
-      const { data: updated, error: updateError } = await supabase
-        .from('Users')
-        .update({ role: selected })
-        .eq('email', authUser.email)
-        .select()
-      if (updateError) throw updateError
-
-      let profile = updated?.[0]
-      if (!profile) {
-        // No Users row yet (e.g. the sign-in insert failed) — create it with the role.
-        const { data: inserted, error: insertError } = await supabase
-          .from('Users')
-          .insert([{
-            name: authUser.user_metadata?.name ?? authUser.user_metadata?.full_name,
-            email: authUser.email,
-            picture: authUser.user_metadata?.picture ?? authUser.user_metadata?.avatar_url,
-            role: selected,
-          }])
-          .select()
-          .single()
-        if (insertError) throw insertError
-        profile = inserted
-      }
-
-      setUser(profile)
+      setUser(await saveActiveRole(supabase, authUser, selected))
       router.replace(homeForRole(selected))
       router.refresh()
     } catch (error) {
@@ -84,7 +61,9 @@ function Onboarding() {
         details: error?.details,
         hint: error?.hint,
       })
-      toast.add({ title: 'Could not save your choice', description: error?.message || 'Please try again.' })
+      toast.add(isRecruiterNotApproved(error)
+        ? { title: 'Recruiter access needs approval', description: 'Ask your admin to approve your email, or continue as a candidate.' }
+        : { title: 'Could not save your choice', description: error?.message || 'Please try again.' })
       setSaving(false)
     }
   }
@@ -108,7 +87,7 @@ function Onboarding() {
             Welcome{user?.name ? `, ${user.name.split(' ')[0]}` : ''}! How will you use AI Interview?
           </h1>
           <p className="mt-3 text-slate-500">
-            We’ll set up your workspace for you. You can’t change this later, so pick the one that fits.
+            Pick where to start. You can switch between workspaces any time from the sidebar.
           </p>
         </div>
 

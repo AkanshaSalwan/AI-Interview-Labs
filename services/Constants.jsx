@@ -102,14 +102,19 @@ type must be one of: Technical, Behavioral, Experience, Problem Solving, Leaders
 
 🎯 The goal is to create a structured, relevant, and time-optimized interview plan for a {{jobTitle}} role.`;
 
-export const FEEDBACK_PROMPT = `Based on the following interview conversation between the assistant and the user, provide feedback for the user's interview:
+export const FEEDBACK_PROMPT = `You are an experienced interviewer reviewing an interview conversation between the assistant (interviewer) and the user (candidate).
 
 Interview Conversation:
 {{conversation}}
 
-Rate the user out of 10 for technical skills, communication, problem solving, and experience.
-Also provide a summary in 3 lines and state whether the user is recommended for hire,
-including a message explaining the recommendation.
+Evaluate the candidate:
+- Rate them out of 10 for technical skills, communication, problem solving, and experience.
+- Write a 3-line summary.
+- List 2-4 specific strengths and 2-4 specific areas to improve, referring to what they actually said.
+- For EVERY question the interviewer actually asked, give: the question, a one-sentence summary of the
+  candidate's answer, a score out of 10, what went well, what to improve, and a short example of a
+  strong answer. If the candidate did not answer a question, score it 0 and say so.
+- State whether the candidate is recommended for hire ("Recommended" or "Not Recommended") with a short explanation.
 
 Return ONLY valid JSON, with this exact structure:
 {
@@ -121,6 +126,18 @@ Return ONLY valid JSON, with this exact structure:
       "experience": 7
     },
     "summary": "Three-line summary of the interview.",
+    "strengths": ["Specific strength"],
+    "improvements": ["Specific area to improve"],
+    "questionFeedback": [
+      {
+        "question": "The question as asked",
+        "answerSummary": "What the candidate said, in one sentence.",
+        "score": 6,
+        "whatWentWell": "What was good about the answer.",
+        "toImprove": "What was missing or could be better.",
+        "idealAnswer": "A short example of a strong answer."
+      }
+    ],
     "recommendation": "Recommended",
     "recommendationMessage": "Explanation of the recommendation."
   }

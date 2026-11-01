@@ -71,9 +71,10 @@ function CreateInterview({ isScreening = false }) {
 
                 </div>
                 <Progress value={step * 33.33} className="my-5 [&_[data-slot=progress-track]]:bg-violet-100" />
-                {step === 1 ? <FormContainer onHandleInputChange={onHandleInputChange}
+                {step === 1 ? <FormContainer
+                    formData={formData}
+                    onHandleInputChange={onHandleInputChange}
                     GoToNext={() => onGoToNextStep()}
-                    defaults={isScreening ? SCREENING_DEFAULTS : undefined}
                 />
                     : step === 2 ? <QuestionList
                         formData={formData}

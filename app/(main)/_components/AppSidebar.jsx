@@ -14,9 +14,12 @@ import {
     SidebarMenuItem,
 } from "@/components/ui/sidebar"
 import { buttonVariants } from "@/components/ui/button"
-import { LogOut, Mic, Plus } from "lucide-react"
+import { ArrowLeftRight, Loader2, LogOut, Mic, Plus } from "lucide-react"
+import { useEffect, useState } from "react"
 import { CandidateSidebarOptions, RecruiterSidebarOptions } from "@/services/Constants"
-import { ROLES, ROLE_LABELS } from "@/services/roles"
+import { ROLES, ROLE_LABELS, homeForRole } from "@/services/roles"
+import { saveActiveRole } from "@/services/userProfile"
+import { toast } from "@/components/ui/toast"
 import { useUser } from "@/app/provider"
 import { createClient } from "@/services/supabaseClient"
 import { cn } from "@/lib/utils"
@@ -26,6 +29,33 @@ export function AppSidebar() {
     const { user } = useUser()
     const isCandidate = user?.role === ROLES.CANDIDATE
     const options = isCandidate ? CandidateSidebarOptions : RecruiterSidebarOptions
+
+    const [switching, setSwitching] = useState(false)
+    const [canRecruit, setCanRecruit] = useState(false)
+    const otherRole = isCandidate ? ROLES.RECRUITER : ROLES.CANDIDATE
+    // Recruiters can always switch to candidate; candidates only if approved as recruiters.
+    const canSwitch = Boolean(user?.role) && (!isCandidate || canRecruit)
+
+    useEffect(() => {
+        if (!isCandidate) return
+        createClient().rpc('is_approved_recruiter').then(({ data, error }) => {
+            if (error) console.error('Recruiter approval check failed:', error.message)
+            setCanRecruit(data === true)
+        })
+    }, [isCandidate, user?.email])
+
+    const switchWorkspace = async () => {
+        setSwitching(true)
+        try {
+            const supabase = createClient()
+            const { data: { user: authUser } } = await supabase.auth.getUser()
+            await saveActiveRole(supabase, authUser, otherRole)
+            window.location.href = homeForRole(otherRole)
+        } catch (error) {
+            toast.add({ title: 'Could not switch workspace', description: error?.message })
+            setSwitching(false)
+        }
+    }
 
     const signOut = async () => {
         await createClient().auth.signOut()
@@ -86,7 +116,18 @@ export function AppSidebar() {
                 </SidebarGroup>
             </SidebarContent>
 
-            <SidebarFooter className="p-3">
+            <SidebarFooter className="gap-2 p-3">
+                {canSwitch && (
+                    <button
+                        type="button"
+                        onClick={switchWorkspace}
+                        disabled={switching}
+                        className="flex h-10 w-full cursor-pointer items-center justify-center gap-2 rounded-xl border border-dashed border-violet-300 text-sm font-medium text-violet-700 transition-colors hover:bg-violet-50 disabled:cursor-wait disabled:opacity-60"
+                    >
+                        {switching ? <Loader2 className="size-4 animate-spin" /> : <ArrowLeftRight className="size-4" />}
+                        Switch to {ROLE_LABELS[otherRole]}
+                    </button>
+                )}
                 <div className="flex items-center gap-3 rounded-xl border border-slate-200 bg-white p-3">
                     {user?.picture ? (
                         <Image

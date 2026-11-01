@@ -11,7 +11,7 @@ import { useUser } from '@/app/provider';
 import { useRouter } from 'next/navigation';
 
 
-function QuestionList({ formData, onCreateLink }) {
+function QuestionList({ formData, onCreateLink, finishLabel = 'Create Interview Link & Finish' }) {
   const supabase = createClient();
   const { user } = useUser();
   const router = useRouter();
@@ -92,6 +92,8 @@ function QuestionList({ formData, onCreateLink }) {
         jobDescription: formData.jobDescription,
         duration: formData.interviewDuration,
         type: formData.types,
+        difficulty: formData.difficulty,
+        resumeText: formData.resumeText,
       });
 
       const content = result.data?.content;
@@ -126,6 +128,8 @@ function QuestionList({ formData, onCreateLink }) {
             questionList: questionList,
             userEmail: user?.email,
             interview_id: interviewId,
+            ...(formData.isPractice && { is_practice: true }),
+            ...(formData.difficulty && { difficulty: formData.difficulty }),
           },
         ])
         .select();
@@ -166,7 +170,7 @@ function QuestionList({ formData, onCreateLink }) {
           <div className='flex justify-end mt-10'>
             <Button onClick={() => onFinish()} disabled={saveLoading}>
               {saveLoading && <Loader2 className='animate-spin' />}
-              Create Interview Link & Finish
+              {finishLabel}
             </Button>
           </div>
         </div>
