@@ -5,9 +5,9 @@ import { Timer, Mic, Phone } from 'lucide-react'
 import Image from 'next/image'
 import Vapi from '@vapi-ai/web';
 import AlertConfirmation from './_components/AlertConfirmation'
-import { Button } from '@/components/ui/button'
 import { toast } from '@/components/ui/toast'
 import axios from 'axios'
+import { cn } from '@/lib/utils'
 import { useParams, useRouter } from 'next/navigation'
 
 
@@ -426,62 +426,83 @@ Key Guidelines:
 
   generateFeedbackRef.current = generateFeedback
 
+  const candidateName = interviewInfo?.userName || 'You'
+  const jobPosition = interviewInfo?.interviewData?.jobPosition
+
   return (
-    <div className='p-20 lg:px-48 xl:px-56 bg-gray-200'>
-      <h2 className='font-bold text-xl flex justify-between'>
-        AI Interview Session
-        <span className='flex gap-2 item-center'>
-          <Timer />
+    <main className='mx-auto w-full max-w-5xl px-4 pb-14 pt-6 md:px-8'>
+      <div className='flex flex-wrap items-end justify-between gap-3'>
+        <div>
+          <p className='text-xs font-medium text-orange-600'>AI interview session</p>
+          <h1 className='mt-1 text-[24px] font-semibold tracking-tight text-slate-900'>{jobPosition || 'Interview'}</h1>
+        </div>
+        <span className='inline-flex items-center gap-2 rounded-full bg-white px-3 py-1.5 text-sm text-slate-700 ring-1 ring-orange-100' style={{ fontVariantNumeric: 'tabular-nums' }}>
+          {callActive && <span className='size-2 animate-pulse rounded-full bg-red-500' />}
+          <Timer className='size-4 text-orange-500' />
           {formatDuration(elapsedSeconds)}
         </span>
-      </h2>
+      </div>
 
-      <div className='grid grid-cols-1 md:grid-cols-2 gap-7 mt-5'>
-        <div className='bg-white h-[400px] rounded-lg border flex flex-col gap-3 flex items-center justify-center'>
+      <div className='mt-5 grid grid-cols-1 gap-4 md:grid-cols-2'>
+        <div className={cn('card-soft flex h-[340px] flex-col items-center justify-center gap-3 rounded-2xl transition-colors', isAssistantSpeaking && 'bg-orange-50/50 ring-2 ring-orange-200')}>
           <div className='relative'>
-            {isAssistantSpeaking && <span className='absolute inset-0 rounded-full bg-violet-500 opacity-70 animate-ping' />}
-            <Image src={'/ai.png'} alt='ai'
+            {isAssistantSpeaking && <span className='absolute inset-0 animate-ping rounded-full bg-orange-400 opacity-60' />}
+            <Image src={'/ai.png'} alt='AI interviewer'
               width={100}
               height={100}
-              className='w-[60px] h-[60px] rounded-full object-cover'
+              className='relative size-[72px] rounded-full object-cover ring-4 ring-white'
             />
           </div>
-          <h2>AI Recruiter</h2>
+          <p className='text-sm font-medium text-slate-900'>AI Interviewer</p>
+          <p className='text-xs text-slate-400'>{isAssistantSpeaking ? 'Speaking…' : callActive ? 'Listening' : 'Waiting to start'}</p>
         </div>
-        <div className='bg-white h-[400px] rounded-lg border flex flex-col gap-3 items-center justify-center'>
+        <div className={cn('card-soft flex h-[340px] flex-col items-center justify-center gap-3 rounded-2xl transition-colors', isCandidateSpeaking && 'bg-emerald-50/40 ring-2 ring-emerald-200')}>
           <div className='relative'>
-            {isCandidateSpeaking && <span className='absolute inset-0 rounded-full bg-green-500 opacity-70 animate-ping' />}
-            <h2 className='text-2xl bg-primary text-white p-3 rounded-full px-6'>{interviewInfo?.userName?.[0]}</h2>
+            {isCandidateSpeaking && <span className='absolute inset-0 animate-ping rounded-full bg-emerald-400 opacity-60' />}
+            <span className='relative flex size-[72px] items-center justify-center rounded-full bg-orange-500 text-2xl font-medium text-white ring-4 ring-white'>
+              {candidateName[0]?.toUpperCase()}
+            </span>
           </div>
-          <h2>{interviewInfo?.userName}</h2>
+          <p className='text-sm font-medium text-slate-900'>{candidateName}</p>
+          <p className='text-xs text-slate-400'>{isCandidateSpeaking ? 'Speaking…' : callActive ? 'Mic on' : 'Ready'}</p>
         </div>
       </div>
 
       {!callActive && (
-        <div className='mt-7 flex justify-center'>
-          <Button onClick={startCall} disabled={!interviewInfo || isStarting}>
-            {isStarting ? 'Connecting...' : 'Start Interview'}
-          </Button>
+        <div className='mt-6 flex justify-center'>
+          <button
+            type='button'
+            onClick={startCall}
+            disabled={!interviewInfo || isStarting}
+            className='btn-orange inline-flex h-11 cursor-pointer items-center gap-2 rounded-xl px-6 text-sm font-medium text-white transition-[filter,transform] hover:brightness-105 active:scale-[0.99] disabled:cursor-not-allowed disabled:opacity-50'
+          >
+            <Mic className='size-4' />
+            {isStarting ? 'Connecting…' : 'Start interview'}
+          </button>
         </div>
       )}
 
       {callActive && (
-        <div className='flex item-center gap-5 justify-center mt-7'>
-          <Mic className='h-12 w-12 p-3 bg-gray-500 text-white rounded-full cursor-pointer' />
+        <div className='mt-6 flex items-center justify-center gap-4'>
+          <span className='flex size-12 items-center justify-center rounded-full bg-white text-orange-500 ring-1 ring-orange-100' title='Microphone on'>
+            <Mic className='size-5' />
+          </span>
           <AlertConfirmation stopInterview={stopInterview}>
-            <Phone className='h-12 w-12 p-3 bg-red-500 text-white rounded-full cursor-pointer' />
+            <span className='flex size-12 cursor-pointer items-center justify-center rounded-full bg-red-500 text-white shadow-md shadow-red-500/30 transition-colors hover:bg-red-600' title='End interview'>
+              <Phone className='size-5 rotate-[135deg]' />
+            </span>
           </AlertConfirmation>
         </div>
       )}
 
-      <h2 className='text-sm text-gray-400 text-center mt-5'>{statusText}</h2>
+      {statusText && <p className='mt-4 text-center text-[13px] text-slate-500'>{statusText}</p>}
       {feedback?.summary && (
-        <div className='mx-auto mt-5 max-w-2xl rounded-lg border bg-white p-4'>
-          <h3 className='font-semibold'>Interview Feedback</h3>
-          <p className='mt-2 whitespace-pre-line text-sm text-gray-600'>{feedback.summary}</p>
+        <div className='card-soft mx-auto mt-5 max-w-2xl rounded-2xl p-5'>
+          <h3 className='text-[15px] font-semibold text-slate-900'>Interview feedback</h3>
+          <p className='mt-2 whitespace-pre-line text-[13px] leading-relaxed text-slate-600'>{feedback.summary}</p>
         </div>
       )}
-    </div>
+    </main>
   )
 }
 

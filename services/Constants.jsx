@@ -1,4 +1,4 @@
-import { LayoutDashboard, Calendar, List, WalletCards, Settings, Mic, ClipboardList, TrendingUp } from "lucide-react"
+import { LayoutDashboard, LayoutGrid, Calendar, CalendarDays, List, WalletCards, Settings, Mic, ChartNoAxesColumnIncreasing } from "lucide-react"
 import { Code2Icon, User2Icon, BriefcaseBusinessIcon, PuzzleIcon } from "lucide-react"
 
 
@@ -33,7 +33,7 @@ export const RecruiterSidebarOptions = [
 export const CandidateSidebarOptions = [
   {
     name: 'Dashboard',
-    icon: LayoutDashboard,
+    icon: LayoutGrid,
     path: '/candidate/dashboard'
   },
   {
@@ -43,12 +43,12 @@ export const CandidateSidebarOptions = [
   },
   {
     name: 'My Interviews',
-    icon: ClipboardList,
+    icon: CalendarDays,
     path: '/candidate/interviews'
   },
   {
     name: 'Progress',
-    icon: TrendingUp,
+    icon: ChartNoAxesColumnIncreasing,
     path: '/candidate/progress'
   },
   {
@@ -142,3 +142,13 @@ Return ONLY valid JSON, with this exact structure:
     "recommendationMessage": "Explanation of the recommendation."
   }
 }`;
+
+// Appended to FEEDBACK_PROMPT for practice interviews: the report is shown to the candidate, not a recruiter.
+export const PRACTICE_FEEDBACK_NOTE = `
+
+IMPORTANT — this was a PRACTICE session and the candidate will read this report themselves (no recruiter sees it).
+Write every text field (summary, strengths, improvements, answerSummary, whatWentWell, toImprove, recommendationMessage)
+in the second person, speaking directly to the candidate as a supportive interview coach: use "you" and "your",
+never "the candidate", "they" or their name. Be honest but encouraging, and make advice concrete and actionable.
+Keep "recommendation" as exactly "Recommended" or "Not Recommended" (it means: ready for a real interview of this kind or not yet),
+and write recommendationMessage as what a real interviewer would likely conclude, addressed to you.`;

@@ -243,3 +243,109 @@
     background: linear-gradient(160deg, #fffdfb, #fff3e8);
   }
 }
+
+/* ───────────── Workspace (sidebar + dashboard) ───────────── */
+@layer components {
+  /* Warm page background with a soft peach wave in the top-right. */
+  .app-canvas {
+    background-color: #fdf9f5;
+    background-image:
+      radial-gradient(ellipse 420px 160px at 78% -40px, rgba(253, 214, 178, 0.35), transparent 70%),
+      radial-gradient(ellipse 600px 260px at 100% 0%, rgba(255, 236, 220, 0.45), transparent 70%);
+    background-repeat: no-repeat;
+  }
+
+  /* Sidebar paper with a peach wave rising from the bottom-left. */
+  .app-sidebar-paper {
+    background-color: #fffaf6;
+    background-image:
+      radial-gradient(ellipse 260px 140px at 0% 74%, rgba(253, 220, 190, 0.3), transparent 70%),
+      radial-gradient(ellipse 320px 200px at 10% 100%, rgba(255, 232, 212, 0.4), transparent 70%);
+    background-repeat: no-repeat;
+  }
+
+  /* White card with a faint paper swoosh in the bottom-right corner. */
+  .card-swoosh {
+    background-color: #fff;
+    background-image: radial-gradient(ellipse 70% 60% at 110% 115%, rgba(255, 228, 204, 0.4), transparent 70%);
+    border: 1px solid rgba(250, 226, 206, 0.7);
+    box-shadow: 0 8px 24px -18px rgba(154, 72, 20, 0.18);
+  }
+
+  .card-soft {
+    background-color: #fff;
+    border: 1px solid rgba(250, 226, 206, 0.7);
+    box-shadow: 0 8px 24px -18px rgba(154, 72, 20, 0.18);
+  }
+
+  /* Peach hero card for the practice call-to-action. */
+  .hero-peach {
+    background:
+      radial-gradient(ellipse 60% 90% at 75% 60%, rgba(255, 220, 188, 0.45), transparent 70%),
+      linear-gradient(120deg, #fffbf7 0%, #fff4ea 55%, #ffebdb 100%);
+    box-shadow: 0 8px 24px -18px rgba(154, 72, 20, 0.18);
+  }
+
+  .btn-orange {
+    background: linear-gradient(100deg, #ff8a2b, #f26b1c 60%, #ea5f12);
+    box-shadow: 0 6px 14px -8px rgba(234, 88, 12, 0.5);
+  }
+}
+
+
+/* Faint folded paper sheets used as a page backdrop (see PaperBackdrop). */
+@layer components {
+  .paper-sheet {
+    position: absolute;
+    border-radius: 20px;
+    background: linear-gradient(155deg, #fffdfb 0%, #fff3e7 100%);
+    clip-path: polygon(0 0, calc(100% - 64px) 0, 100% 64px, 100% 100%, 0 100%);
+  }
+  .paper-sheet::after {
+    content: "";
+    position: absolute;
+    top: 0;
+    right: 0;
+    width: 64px;
+    height: 64px;
+    border-bottom-left-radius: 12px;
+    background: linear-gradient(to bottom left, transparent 50%, #ffefe0 50%, #f5d2b2 100%);
+  }
+}
+
+/* Folded orange paper shapes for the page backdrop (see PaperBackdrop). */
+@layer components {
+  /* Two-tone triangle hanging from the top edge: pale fold on the left, orange on the right. */
+  .fold-shard-top {
+    position: absolute;
+    clip-path: polygon(0 0, 100% 0, 58% 100%);
+    background: linear-gradient(105deg, #fff1e4 0 46%, #fdba74 46%, #f97316 78%, #ea580c 100%);
+  }
+  /* Two-tone triangle pointing in from the left edge. */
+  .fold-shard-left {
+    position: absolute;
+    clip-path: polygon(0 0, 100% 42%, 0 100%);
+    background: linear-gradient(160deg, #ffe4cc 0 44%, #fb923c 44%, #f97316 75%, #ea580c 100%);
+  }
+  /* Soft peach paper waves along the bottom. */
+  .paper-waves {
+    position: absolute;
+    background:
+      radial-gradient(ellipse 45% 70% at 15% 100%, rgba(253, 214, 178, 0.55), transparent 70%),
+      radial-gradient(ellipse 40% 60% at 70% 110%, rgba(255, 226, 200, 0.6), transparent 70%);
+  }
+}
+
+/* Small folded-paper corner for page edges and card corners. */
+@layer components {
+  .fold-corner-bl {
+    position: absolute;
+    clip-path: polygon(0 0, 100% 100%, 0 100%);
+    background: linear-gradient(135deg, #ffe7d2 0 50%, #fb923c 50%, #f97316 80%, #ea580c 100%);
+  }
+  .fold-corner-tr {
+    position: absolute;
+    clip-path: polygon(0 0, 100% 0, 100% 100%);
+    background: linear-gradient(225deg, #fdba74 0%, #fed7aa 35%, rgba(255, 237, 213, 0) 70%);
+  }
+}

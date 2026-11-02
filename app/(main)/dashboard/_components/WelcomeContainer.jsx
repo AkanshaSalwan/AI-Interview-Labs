@@ -1,7 +1,8 @@
 'use client'
-import Image from 'next/image'
+import { ChevronDown } from 'lucide-react'
 import { useUser } from '@/app/provider';
 import { ROLE_LABELS } from '@/services/roles';
+import AccountMenu, { UserAvatar } from '../../_components/AccountMenu'
 import React from 'react'
 
 function greeting() {
@@ -23,16 +24,16 @@ function WelcomeContainer() {
                 </h2>
                 <p className='truncate text-xs text-slate-500'>AI-driven interviews, hassle-free hiring</p>
             </div>
-            <div className='flex items-center gap-3'>
+            <div className='flex items-center gap-4'>
                 {user?.role && (
-                    <span className='hidden rounded-full border border-violet-200 bg-violet-50 px-2.5 py-0.5 text-xs font-medium text-violet-700 sm:inline-block'>
+                    <span className='hidden rounded-full bg-orange-50 px-3 py-1 text-xs font-medium text-orange-600 ring-1 ring-orange-100 sm:inline-block'>
                         {ROLE_LABELS[user.role]}
                     </span>
                 )}
-                {user?.picture && (
-                    <Image src={user.picture} alt='' width={36} height={36}
-                        className='size-9 rounded-full object-cover ring-2 ring-white shadow-sm' />
-                )}
+                <AccountMenu triggerClassName='flex items-center gap-2 rounded-full'>
+                    <UserAvatar user={user} className='size-9 text-sm ring-2 ring-white' />
+                    <ChevronDown className='size-4 text-slate-400' />
+                </AccountMenu>
             </div>
         </div>
     )

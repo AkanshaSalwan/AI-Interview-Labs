@@ -4,8 +4,8 @@ import { useEffect, useRef, useState } from 'react'
 // Single-series line chart for scores out of 10.
 // points: [{ id, label, value (0–10 or null), detail }] in chronological order.
 // Single series → no legend; the card title names what's plotted.
-const SERIES_COLOR = '#7c3aed' // brand violet, validated: lightness band, chroma, ≥3:1 on white
-const GRID_COLOR = '#e2e8f0'
+const SERIES_COLOR = '#ea580c' // brand orange (orange-600), ≥3:1 on white
+const GRID_COLOR = '#f3e8de'
 const AXIS_TEXT = '#64748b'
 const SURFACE = '#ffffff'
 const MAX = 10
@@ -89,7 +89,7 @@ function ScoreLineChart({ points, height = 220, compact = false, ariaLabel }) {
                     onKeyDown={onKeyDown}
                     onFocus={() => setActive((current) => current ?? last?.index ?? null)}
                     onBlur={() => setActive(null)}
-                    className='rounded-md outline-none focus-visible:ring-2 focus-visible:ring-violet-300'
+                    className='rounded-md outline-none focus-visible:ring-2 focus-visible:ring-orange-300'
                 >
                     {ticks.map((tick) => (
                         <g key={tick}>
@@ -164,7 +164,7 @@ function ScoreLineChart({ points, height = 220, compact = false, ariaLabel }) {
 
             {activePoint && Number.isFinite(activePoint.value) && (
                 <div
-                    className='pointer-events-none absolute z-10 min-w-32 rounded-lg border border-slate-200 bg-white px-3 py-2 shadow-lg'
+                    className='pointer-events-none absolute z-10 min-w-32 rounded-lg border border-orange-100 bg-white px-3 py-2 shadow-lg shadow-orange-900/5'
                     style={{
                         top: Math.max(0, y(activePoint.value) - 64),
                         left: flipTooltip ? undefined : tooltipLeft + 12,

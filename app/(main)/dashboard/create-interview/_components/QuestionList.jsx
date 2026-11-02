@@ -3,7 +3,6 @@ import React, { useEffect, useState } from 'react'
 import axios from 'axios'
 import { toast } from '@/components/ui/toast';
 import { Loader2, Loader2Icon } from 'lucide-react';
-import { Button } from '@/components/ui/button';
 import QuestionListContainer from './QuestionListContainer';
 import { v4 as uuidv4 } from 'uuid';
 import { createClient } from '@/services/supabaseClient';
@@ -155,23 +154,30 @@ function QuestionList({ formData, onCreateLink, finishLabel = 'Create Interview 
   return (
     <div>
       {loading &&
-        <div className='p-5 bg-violet-50 rounded-2xl border border-violet-500 flex gap-5 items-center'>
-          <Loader2Icon className='animate-spin' />
+        <div className='card-soft flex items-center gap-4 rounded-2xl p-5'>
+          <span className='flex size-10 shrink-0 items-center justify-center rounded-xl bg-orange-50 text-orange-500'>
+            <Loader2Icon className='size-5 animate-spin' />
+          </span>
           <div>
-            <h2 className='font-medium'>Generating Question List...</h2>
-            <p className='text-violet-500'>Our AI is crafting personalized questions bases on your job position and job description.</p>
+            <h2 className='text-sm font-medium text-slate-900'>Generating questions…</h2>
+            <p className='mt-0.5 text-xs text-slate-500'>Our AI is writing questions for this role and description.</p>
           </div>
         </div>
       }
 
       {!loading && questionList?.length > 0 && (
-        <div className='p-5 bg-white rounded-2xl'>
+        <div>
           <QuestionListContainer questionList={questionList} />
-          <div className='flex justify-end mt-10'>
-            <Button onClick={() => onFinish()} disabled={saveLoading}>
-              {saveLoading && <Loader2 className='animate-spin' />}
+          <div className='mt-6 flex justify-end'>
+            <button
+              type='button'
+              onClick={() => onFinish()}
+              disabled={saveLoading}
+              className='btn-orange inline-flex h-10 cursor-pointer items-center gap-2 rounded-xl px-5 text-sm font-medium text-white transition-[filter,transform] hover:brightness-105 active:scale-[0.99] disabled:cursor-wait disabled:opacity-60'
+            >
+              {saveLoading && <Loader2 className='size-4 animate-spin' />}
               {finishLabel}
-            </Button>
+            </button>
           </div>
         </div>
       )}

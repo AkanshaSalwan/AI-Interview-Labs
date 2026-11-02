@@ -1,21 +1,40 @@
 'use client'
 import { useEffect, useState } from 'react'
+import Image from 'next/image'
 import Link from 'next/link'
 import moment from 'moment'
-import { ArrowRight, Award, CalendarClock, ClipboardList, Gauge, History, Mic, ShieldAlert, Sparkles, X } from 'lucide-react'
+import { ArrowRight, Award, CalendarDays, ChartNoAxesColumnIncreasing, History, Mic, ShieldAlert, Sparkles, Video, X } from 'lucide-react'
 import { RECRUITER_NOT_APPROVED_NOTICE } from '@/services/userProfile'
 import { averageScore } from '@/services/scores'
 import { usePracticeResults } from '../_components/usePracticeResults'
-import PageHeader from '../../_components/PageHeader'
-import StatCard from '../../_components/StatCard'
-import EmptyState from '../../_components/EmptyState'
 import { useAssignedInterviews } from '../_components/useAssignedInterviews'
 import AssignedInterviewItem from '../_components/AssignedInterviewItem'
 
 function scoreTone(score) {
     if (score >= 7) return 'bg-emerald-50 text-emerald-700'
-    if (score >= 5) return 'bg-amber-50 text-amber-700'
-    return 'bg-red-50 text-red-700'
+    return 'bg-orange-50 text-orange-600'
+}
+
+function IconTile({ icon: Icon, className = 'size-10' }) {
+    return (
+        <span className={`flex shrink-0 items-center justify-center rounded-xl bg-orange-50 text-orange-500 ${className}`}>
+            <Icon className='size-5' strokeWidth={1.75} />
+        </span>
+    )
+}
+
+function DashboardStat({ icon, label, value, loading }) {
+    return (
+        <div className='card-swoosh rounded-2xl p-5'>
+            <IconTile icon={icon} />
+            <p className='mt-4 text-sm text-slate-500'>{label}</p>
+            {loading ? (
+                <div className='mt-2 h-9 w-20 animate-pulse rounded-lg bg-orange-50' />
+            ) : (
+                <p className='mt-1 truncate text-[22px] font-semibold leading-tight tracking-tight text-slate-900'>{value}</p>
+            )}
+        </div>
+    )
 }
 
 function CandidateDashboard() {
@@ -38,10 +57,10 @@ function CandidateDashboard() {
 
     return (
         <div>
-            <PageHeader
-                title='Your dashboard'
-                description='Prepare with the AI interviewer and track how you improve.'
-            />
+            <div className='mb-8'>
+                <h1 className='text-2xl font-semibold tracking-tight text-slate-900 sm:text-[30px]'>Your dashboard</h1>
+                <p className='mt-1.5 text-[15px] text-slate-500'>Prepare with the AI interviewer and track how you improve.</p>
+            </div>
 
             {showRecruiterNotice && (
                 <div role='status' className='mb-6 flex items-start gap-3 rounded-2xl border border-amber-200 bg-amber-50 p-4'>
@@ -63,74 +82,76 @@ function CandidateDashboard() {
                 </div>
             )}
 
-            <div className='grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4'>
-                <StatCard icon={ClipboardList} label='Practice sessions' value={results.length} loading={loading} />
-                <StatCard icon={Gauge} label='Average score' value={average !== null ? `${average}/10` : '—'} tone='sky' loading={loading} />
-                <StatCard icon={Award} label='Best score' value={best !== null ? `${best}/10` : '—'} tone='emerald' loading={loading} />
-                <StatCard
-                    icon={CalendarClock}
-                    label='Last practice'
-                    value={lastDate ? moment(lastDate).fromNow() : '—'}
-                    tone='amber'
-                    loading={loading}
-                />
+            <div className='grid grid-cols-1 gap-5 sm:grid-cols-2 xl:grid-cols-4'>
+                <DashboardStat icon={Video} label='Practice sessions' value={results.length} loading={loading} />
+                <DashboardStat icon={ChartNoAxesColumnIncreasing} label='Average score' value={average !== null ? `${average}/10` : '—'} loading={loading} />
+                <DashboardStat icon={Award} label='Best score' value={best !== null ? `${best}/10` : '—'} loading={loading} />
+                <DashboardStat icon={CalendarDays} label='Last practice' value={lastDate ? moment(lastDate).fromNow() : '—'} loading={loading} />
             </div>
 
-            <div className='mt-6 grid gap-6 lg:grid-cols-5'>
+            <div className='mt-6 grid gap-5 lg:grid-cols-[1.7fr_1fr]'>
                 {/* Practice hero */}
-                <div className='relative overflow-hidden rounded-2xl bg-gradient-to-br from-violet-700 via-violet-600 to-fuchsia-500 p-7 text-white lg:col-span-3'>
-                    <div className='pointer-events-none absolute -right-16 -top-16 size-64 rounded-full bg-white/10 blur-2xl' />
-                    <div className='pointer-events-none absolute -bottom-20 right-24 size-48 rounded-full bg-fuchsia-300/20 blur-2xl' />
-                    <span className='relative inline-flex items-center gap-1.5 rounded-full bg-white/15 px-3 py-1 text-xs font-medium backdrop-blur'>
-                        <Sparkles className='size-3.5' /> Practice mode
-                    </span>
-                    <h2 className='relative mt-4 text-2xl font-bold tracking-tight'>Rehearse your next interview</h2>
-                    <p className='relative mt-2 max-w-md text-violet-100'>
-                        Pick a role and difficulty, then talk through real questions with the AI interviewer.
-                        You’ll get scored feedback the moment you finish.
-                    </p>
-                    <Link
-                        href='/candidate/practice'
-                        className='relative mt-6 inline-flex h-11 items-center gap-2 rounded-xl bg-white px-5 font-medium text-violet-700 shadow-lg transition-transform hover:scale-[1.02]'
-                    >
-                        <Mic className='size-5' /> Start practicing
-                    </Link>
+                <div className='hero-peach relative overflow-hidden rounded-2xl border border-orange-100/60 p-7 sm:p-8'>
+                    <div className='relative z-10 max-w-[400px]'>
+                        <span className='inline-flex items-center gap-1.5 rounded-full bg-white/70 px-2.5 py-1 text-xs font-medium text-orange-600 ring-1 ring-orange-100'>
+                            <Sparkles className='size-3.5' /> Practice mode
+                        </span>
+                        <h2 className='mt-4 text-2xl font-semibold tracking-tight text-slate-900'>Rehearse your next interview</h2>
+                        <p className='mt-2 text-[15px] leading-relaxed text-slate-500'>
+                            Pick a role and difficulty, then talk through real questions with the AI interviewer.
+                            You’ll get scored feedback the moment you finish.
+                        </p>
+                        <Link
+                            href='/candidate/practice'
+                            className='btn-orange mt-6 inline-flex h-11 items-center gap-2 rounded-xl px-5 text-sm font-medium text-white transition-[filter,transform] hover:brightness-105 active:scale-[0.99]'
+                        >
+                            <Mic className='size-4' /> Start practicing <ArrowRight className='size-4' />
+                        </Link>
+                    </div>
+                    <Image
+                        src='/Cheerful Robot Workspace Cutout.png'
+                        alt=''
+                        width={1536}
+                        height={1024}
+                        priority
+                        className='pointer-events-none absolute -right-6 bottom-0 hidden h-auto w-[300px] md:block lg:w-[270px] xl:w-[320px]'
+                    />
                 </div>
 
                 {/* Assigned interviews */}
-                <div className='rounded-2xl border border-slate-200 bg-white p-6 lg:col-span-2'>
+                <div className='card-soft flex flex-col rounded-2xl p-6'>
                     <div className='flex items-center justify-between'>
-                        <h2 className='font-semibold text-slate-900'>Assigned interviews</h2>
-                        <Link href='/candidate/interviews' className='text-sm font-medium text-violet-600 hover:text-violet-700'>View all</Link>
+                        <h2 className='text-base font-semibold text-slate-900'>Assigned interviews</h2>
+                        <Link href='/candidate/interviews' className='inline-flex items-center gap-1 text-sm font-medium text-orange-500 hover:text-orange-600'>
+                            View all <ArrowRight className='size-4' />
+                        </Link>
                     </div>
                     {assignedLoading ? (
-                        <div className='mt-4 space-y-2'>
-                            {[0, 1].map((item) => <div key={item} className='h-14 animate-pulse rounded-xl bg-slate-100' />)}
+                        <div className='mt-5 space-y-2'>
+                            {[0, 1].map((item) => <div key={item} className='h-14 animate-pulse rounded-xl bg-orange-50' />)}
                         </div>
                     ) : pendingInvites.length ? (
-                        <ul className='-mx-6 mt-2 divide-y divide-slate-100'>
+                        <ul className='-mx-6 mt-3 divide-y divide-orange-50'>
                             {pendingInvites.slice(0, 3).map((invite) => (
                                 <AssignedInterviewItem key={invite.id} invite={invite} compact />
                             ))}
                         </ul>
                     ) : (
-                        <div className='mt-6 flex flex-col items-center py-4 text-center'>
-                            <span className='flex size-11 items-center justify-center rounded-xl bg-slate-100 text-slate-500'>
-                                <CalendarClock className='size-5' />
-                            </span>
-                            <p className='mt-3 text-sm font-medium text-slate-700'>No pending invitations</p>
-                            <p className='mt-1 text-xs text-slate-500'>When a recruiter invites you, the interview will show up here.</p>
+                        <div className='flex flex-1 flex-col items-center justify-center py-6 text-center'>
+                            <IconTile icon={CalendarDays} className='size-12 [&_svg]:size-6' />
+                            <p className='mt-4 text-[15px] font-medium text-slate-900'>No pending invitations</p>
+                            <p className='mt-1 max-w-xs text-sm text-slate-500'>When a recruiter invites you, the interview will show up here.</p>
                         </div>
                     )}
                 </div>
             </div>
 
             {/* Recent results */}
-            <div className='mt-8'>
+            <div className='mt-9'>
                 <div className='mb-4 flex items-center justify-between'>
                     <h2 className='text-lg font-semibold text-slate-900'>Recent practice</h2>
                     {results.length > 0 && (
-                        <Link href='/candidate/progress' className='inline-flex items-center gap-1 text-sm font-medium text-violet-600 hover:text-violet-700'>
+                        <Link href='/candidate/progress' className='inline-flex items-center gap-1 text-sm font-medium text-orange-500 hover:text-orange-600'>
                             See progress <ArrowRight className='size-4' />
                         </Link>
                     )}
@@ -139,31 +160,34 @@ function CandidateDashboard() {
                 {loading ? (
                     <div className='space-y-3'>
                         {[0, 1, 2].map((item) => (
-                            <div key={item} className='h-[72px] animate-pulse rounded-2xl border border-slate-200 bg-white' />
+                            <div key={item} className='card-soft h-[72px] animate-pulse rounded-2xl' />
                         ))}
                     </div>
                 ) : results.length === 0 ? (
-                    <EmptyState
-                        icon={History}
-                        title='No practice sessions yet'
-                        description='Finish a practice interview and your scores will appear here.'
-                    />
+                    <div className='card-soft flex flex-col items-center rounded-2xl px-6 py-12 text-center'>
+                        <IconTile icon={History} className='size-12' />
+                        <h3 className='mt-4 font-medium text-slate-900'>No practice sessions yet</h3>
+                        <p className='mt-1 max-w-sm text-sm text-slate-500'>Finish a practice interview and your scores will appear here.</p>
+                    </div>
                 ) : (
-                    <ul className='divide-y divide-slate-100 overflow-hidden rounded-2xl border border-slate-200 bg-white'>
+                    <ul className='space-y-3'>
                         {results.slice(0, 5).map((result) => (
                             <li key={result.id}>
-                                <Link href={`/interview/${result.interview_id}/completed?feedback=${result.id}`} className='flex items-center gap-4 px-5 py-4 transition-colors hover:bg-slate-50'>
-                                    <span className='flex size-10 shrink-0 items-center justify-center rounded-xl bg-violet-50 font-semibold text-violet-600'>
+                                <Link
+                                    href={`/interview/${result.interview_id}/completed?feedback=${result.id}`}
+                                    className='card-soft flex items-center gap-4 rounded-2xl px-5 py-3.5 transition-colors hover:bg-orange-50/40'
+                                >
+                                    <span className='flex size-10 shrink-0 items-center justify-center rounded-xl bg-orange-50 text-[15px] font-medium text-orange-500'>
                                         {result.jobPosition?.[0]?.toUpperCase() ?? 'I'}
                                     </span>
                                     <div className='min-w-0 flex-1'>
-                                        <p className='truncate font-medium text-slate-900'>{result.jobPosition}</p>
+                                        <p className='truncate text-[15px] font-medium text-slate-900'>{result.jobPosition}</p>
                                         <p className='text-xs text-slate-500'>
                                             {result.created_at ? moment(result.created_at).format('DD MMM YYYY, h:mm A') : '—'}
                                         </p>
                                     </div>
                                     {result.score !== null && (
-                                        <span className={`rounded-full px-2.5 py-1 text-sm font-semibold ${scoreTone(result.score)}`}>
+                                        <span className={`rounded-full px-3 py-1 text-sm font-medium ${scoreTone(result.score)}`}>
                                             {result.score}/10
                                         </span>
                                     )}

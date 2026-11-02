@@ -26,7 +26,7 @@ function TranscriptView({ transcript, candidateName = 'Candidate', className }) 
                         {isAssistant ? (
                             <Image src='/ai.png' alt='' width={32} height={32} className='size-8 shrink-0 rounded-full object-cover' />
                         ) : (
-                            <span className='flex size-8 shrink-0 items-center justify-center rounded-full bg-violet-600 text-xs font-semibold text-white'>
+                            <span className='flex size-8 shrink-0 items-center justify-center rounded-full bg-orange-500 text-xs font-medium text-white'>
                                 {candidateName?.[0]?.toUpperCase() ?? 'C'}
                             </span>
                         )}
@@ -35,10 +35,10 @@ function TranscriptView({ transcript, candidateName = 'Candidate', className }) 
                                 {isAssistant ? 'AI Recruiter' : candidateName}
                             </p>
                             <p className={cn(
-                                'whitespace-pre-line rounded-2xl px-4 py-2.5 text-left text-sm leading-relaxed',
+                                'whitespace-pre-line rounded-2xl px-4 py-2.5 text-left text-[13px] leading-relaxed',
                                 isAssistant
-                                    ? 'rounded-bl-sm bg-slate-100 text-slate-700'
-                                    : 'rounded-br-sm bg-violet-600 text-white'
+                                    ? 'rounded-bl-sm bg-[#f7f1eb] text-slate-700'
+                                    : 'rounded-br-sm bg-orange-500 text-white'
                             )}>
                                 {message.content}
                             </p>

@@ -1,7 +1,7 @@
 import OpenAI from "openai";
 import { NextResponse } from "next/server";
 import { createSupabaseServerClient } from "@/services/supabaseServer";
-import { FEEDBACK_PROMPT } from "@/services/Constants";
+import { FEEDBACK_PROMPT, PRACTICE_FEEDBACK_NOTE } from "@/services/Constants";
 
 const FREE_MODELS = [
     "google/gemma-4-31b-it:free",
@@ -75,10 +75,11 @@ export async function POST(request) {
             return NextResponse.json({ error: SAVE_ERRORS.INTERVIEW_NOT_FOUND.message }, { status: 404 });
         }
 
+        // Practice reports are read by the candidate, so they are written to "you".
         const finalPrompt = FEEDBACK_PROMPT.replace(
             "{{conversation}}",
             JSON.stringify(conversation)
-        );
+        ) + (interview.is_practice ? PRACTICE_FEEDBACK_NOTE : "");
         const openai = new OpenAI({
             baseURL: "https://openrouter.ai/api/v1",
             apiKey: process.env.OPENROUTER_API_KEY,
@@ -119,7 +120,8 @@ export async function POST(request) {
                     continue;
                 }
 
-                const feedbackData = parsed.feedback;
+                // Practice reports are already written to "you"; mark them so they are never rewritten.
+                const feedbackData = interview.is_practice ? { ...parsed.feedback, voice: "you" } : parsed.feedback;
                 const recommendationText = String(feedbackData.recommendation || "");
                 const { data: savedId, error: saveError } = await supabase.rpc("submit_interview_feedback", {
                     p_interview_id: interview_id,

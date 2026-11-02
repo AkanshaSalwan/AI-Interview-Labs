@@ -19,14 +19,14 @@ function AlertConfirmation({ children, stopInterview }) {
             </AlertDialogTrigger>
             <AlertDialogContent>
                 <AlertDialogHeader>
-                    <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
+                    <AlertDialogTitle>End the interview?</AlertDialogTitle>
                     <AlertDialogDescription>
-                        This action cannot be undone. Your interview will end.
+                        Your answers so far will be scored. You can&apos;t continue this interview after ending it.
                     </AlertDialogDescription>
                 </AlertDialogHeader>
                 <AlertDialogFooter>
-                    <AlertDialogCancel>Cancel</AlertDialogCancel>
-                    <AlertDialogAction onClick={()=>stopInterview()}>Continue</AlertDialogAction>
+                    <AlertDialogCancel className="rounded-xl">Keep going</AlertDialogCancel>
+                    <AlertDialogAction className="rounded-xl bg-red-500 text-white hover:bg-red-600" onClick={()=>stopInterview()}>End interview</AlertDialogAction>
                 </AlertDialogFooter>
             </AlertDialogContent>
         </AlertDialog>

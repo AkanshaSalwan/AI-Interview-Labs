@@ -2,13 +2,11 @@
 import React, { useContext, useEffect, useMemo, useState } from 'react'
 import Image from 'next/image'
 import { useParams, useRouter } from 'next/navigation'
-import { Building2, Clock, Info, Loader2Icon, Settings, Video } from 'lucide-react'
+import { Clock, Info, Loader2Icon, Video } from 'lucide-react'
 import { Input } from '@/components/ui/input'
-import { Button } from '@/components/ui/button'
 import { InterviewDataContext } from '@/context/InterviewDataContext'
 import { createClient } from '@/services/supabaseClient'
 import { useUser } from '@/app/provider'
-import Logo from '@/components/brand/Logo'
 
 
 
@@ -95,95 +93,93 @@ function Interview() {
         }
     }
 
+    const inputClass = 'h-10 w-full rounded-xl border border-orange-100 bg-white px-3.5 text-sm text-slate-800 shadow-none placeholder:text-slate-400 focus-visible:border-orange-300 focus-visible:ring-3 focus-visible:ring-orange-100 focus-visible:ring-offset-0'
+
     return (
-        <main className='min-h-screen bg-slate-50 px-4 py-8 sm:py-12'>
-            <section className='mx-auto w-full max-w-md rounded-xl border border-slate-200 bg-white p-6 shadow-sm'>
-                <div className='flex justify-center'>
-                    <Logo />
-                </div>
-
-                <div className='mt-3 flex justify-center'>
+        <main className='px-4 py-8 sm:py-12'>
+            <section className='card-soft mx-auto w-full max-w-md overflow-hidden rounded-2xl'>
+                <div className='hero-peach relative flex flex-col items-center px-6 pb-5 pt-6 text-center'>
                     <Image
-                        src="/interview.png"
-                        alt='Interview illustration'
-                        width={500}
-                        height={500}
-                        className='my-3 w-[220px] object-contain'
+                        src='/Cheerful Robot Workspace Cutout.png'
+                        alt=''
+                        width={1536}
+                        height={1024}
+                        priority
+                        className='h-auto w-[210px]'
                     />
-                </div>
-
-                <header className='text-center'>
-                    <h1 className='text-xl font-bold tracking-tight text-slate-900'>
-                        {isLoading ? 'Loading interview...' : loadError || interviewData?.jobPosition}
+                    <p className='mt-3 text-xs font-medium text-orange-600'>AI voice interview</p>
+                    <h1 className='mt-1 text-xl font-semibold tracking-tight text-slate-900'>
+                        {isLoading ? 'Loading interview…' : loadError || interviewData?.jobPosition}
                     </h1>
                     {interviewData?.duration && (
-                        <div className='mt-3 flex items-center justify-center gap-5 text-sm text-slate-500'>
-                            <span className='flex items-center gap-1.5'>
-                                <Clock className='h-4 w-4' />
-                                {interviewData.duration} Minutes
-                            </span>
-                        </div>
+                        <span className='mt-2.5 inline-flex items-center gap-1.5 rounded-full bg-white/80 px-2.5 py-1 text-xs text-slate-600 ring-1 ring-orange-100'>
+                            <Clock className='size-3.5 text-orange-500' />
+                            {interviewData.duration} minutes
+                        </span>
                     )}
-                </header>
-
-                <div className='mt-6'>
-                    <label htmlFor='candidate-name' className='mb-2 block text-sm font-medium text-slate-900'>
-                        Enter your full name
-                    </label>
-                    <Input
-                        id='candidate-name'
-                        placeholder='e.g., John Smith'
-                        value={userName}
-                        onChange={(event) => setUserName(event.target.value)}
-                        className='h-10 w-full rounded-md border border-slate-300 bg-white px-3 text-sm text-slate-700 shadow-none placeholder:text-slate-400 focus-visible:border-slate-400 focus-visible:ring-0 focus-visible:ring-offset-0'
-                    />
-                </div>
-                 <div className='mt-6'>
-                    <label htmlFor='candidate-email' className='mb-2 block text-sm font-medium text-slate-900'>
-                        Enter your Email
-                    </label>
-                    <Input
-                        id='candidate-email'
-                        placeholder='e.g., john.smith@gmail.com'
-                        type='email'
-                        value={userEmail}
-                        onChange={(event) => setUserEmail(event.target.value)}
-                        className='h-10 w-full rounded-md border border-slate-300 bg-white px-3 text-sm text-slate-700 shadow-none placeholder:text-slate-400 focus-visible:border-slate-400 focus-visible:ring-0 focus-visible:ring-offset-0'
-                    />
                 </div>
 
-                <div className='mt-4 flex items-start gap-2.5 rounded-md border border-violet-100 bg-violet-50 p-3'>
-                    <Info className='mt-0.5 h-4 w-4 shrink-0 text-violet-600' />
+                <div className='space-y-4 p-6'>
                     <div>
-                        <h2 className='text-sm font-semibold text-violet-800'>Before you begin</h2>
-                        <ul className='mt-1 list-disc space-y-0.5 pl-4 text-xs text-violet-700'>
-                            <li>Ensure you have a stable internet connection</li>
-                            <li>Test your camera and microphone</li>
-                            <li>Find a quiet place for the interview</li>
-                        </ul>
+                        <label htmlFor='candidate-name' className='mb-1.5 block text-[13px] font-medium text-slate-700'>
+                            Full name
+                        </label>
+                        <Input
+                            id='candidate-name'
+                            placeholder='e.g., John Smith'
+                            value={userName}
+                            onChange={(event) => setUserName(event.target.value)}
+                            className={inputClass}
+                        />
                     </div>
-                </div>
+                    <div>
+                        <label htmlFor='candidate-email' className='mb-1.5 block text-[13px] font-medium text-slate-700'>
+                            Email
+                        </label>
+                        <Input
+                            id='candidate-email'
+                            placeholder='e.g., john.smith@gmail.com'
+                            type='email'
+                            value={userEmail}
+                            onChange={(event) => setUserEmail(event.target.value)}
+                            className={inputClass}
+                        />
+                    </div>
 
-                <div className='mt-4 space-y-2'>
-                    <Button
-                        className='h-9 w-full'
-                        disabled={
-                            isLoading ||
-                            loading ||
-                            Boolean(loadError) ||
-                            !userName.trim() ||
-                            !userEmail.trim()
-                        }
-                        onClick={onJoinInterview}
-                    >
-                        {loading ? <Loader2Icon className='animate-spin' /> : <Video />}
-                        Join Interview
-                    </Button>
-                    {joinError && (
-                        <p role='alert' className='text-sm text-red-600'>
-                            {joinError}
-                        </p>
-                    )}
+                    <div className='flex items-start gap-2.5 rounded-xl bg-orange-50/70 p-3.5 ring-1 ring-orange-100'>
+                        <Info className='mt-0.5 size-4 shrink-0 text-orange-500' />
+                        <div>
+                            <h2 className='text-[13px] font-medium text-slate-900'>Before you begin</h2>
+                            <ul className='mt-1 space-y-0.5 text-xs text-slate-600'>
+                                <li>· Use a stable internet connection</li>
+                                <li>· Allow microphone access when asked</li>
+                                <li>· Find a quiet place for the interview</li>
+                            </ul>
+                        </div>
+                    </div>
+
+                    <div className='space-y-2'>
+                        <button
+                            type='button'
+                            className='btn-orange inline-flex h-10 w-full cursor-pointer items-center justify-center gap-2 rounded-xl text-sm font-medium text-white transition-[filter,transform] hover:brightness-105 active:scale-[0.99] disabled:cursor-not-allowed disabled:opacity-50'
+                            disabled={
+                                isLoading ||
+                                loading ||
+                                Boolean(loadError) ||
+                                !userName.trim() ||
+                                !userEmail.trim()
+                            }
+                            onClick={onJoinInterview}
+                        >
+                            {loading ? <Loader2Icon className='size-4 animate-spin' /> : <Video className='size-4' />}
+                            Join interview
+                        </button>
+                        {joinError && (
+                            <p role='alert' className='text-[13px] text-red-600'>
+                                {joinError}
+                            </p>
+                        )}
+                    </div>
                 </div>
             </section>
         </main>

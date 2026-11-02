@@ -7,13 +7,13 @@ function AssignedInterviewItem({ invite, compact = false }) {
     const jobPosition = invite.interview?.jobPosition ?? 'Interview'
 
     return (
-        <li className='flex items-center gap-4 px-5 py-4'>
-            <span className='flex size-10 shrink-0 items-center justify-center rounded-xl bg-violet-50 font-semibold text-violet-600'>
+        <li className='flex items-center gap-4 px-5 py-3.5 transition-colors hover:bg-orange-50/40'>
+            <span className='flex size-10 shrink-0 items-center justify-center rounded-xl bg-orange-50 text-[15px] font-medium text-orange-500'>
                 {jobPosition[0]?.toUpperCase()}
             </span>
             <div className='min-w-0 flex-1'>
-                <p className='truncate font-medium text-slate-900'>{jobPosition}</p>
-                <p className='flex items-center gap-2 text-xs text-slate-500'>
+                <p className='truncate text-sm font-medium text-slate-900'>{jobPosition}</p>
+                <p className='mt-0.5 flex items-center gap-2 text-xs text-slate-500'>
                     {invite.interview?.duration && (
                         <span className='flex items-center gap-1'><Clock3 className='size-3' />{invite.interview.duration} min</span>
                     )}
@@ -31,9 +31,9 @@ function AssignedInterviewItem({ invite, compact = false }) {
             ) : (
                 <Link
                     href={`/interview/${invite.interview_id}`}
-                    className='inline-flex h-9 items-center gap-1.5 rounded-lg bg-gradient-to-r from-violet-600 to-fuchsia-500 px-3.5 text-sm font-medium text-white shadow-sm shadow-violet-500/25 hover:opacity-90'
+                    className='btn-orange inline-flex h-8 items-center gap-1.5 rounded-lg px-3 text-[13px] font-medium text-white hover:brightness-105'
                 >
-                    <Play className='size-3.5' /> {compact ? 'Start' : 'Start interview'}
+                    <Play className='size-3' /> {compact ? 'Start' : 'Start interview'}
                 </Link>
             )}
         </li>
