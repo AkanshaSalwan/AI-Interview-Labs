@@ -1,6 +1,6 @@
 // NEXT_PUBLIC_HOST_URL must point at the interview route, e.g. http://localhost:3000/interview
 export function interviewUrl(interviewId) {
-  return `${process.env.NEXT_PUBLIC_HOST_URL?.replace(/\/+$/, '')}/${interviewId}`
+  return `${process.env.NEXT_PUBLIC_HOST_URL?.trim().replace(/\/+$/, '')}/${interviewId}`
 }
 
 // Opens the user's mail app with an invitation already written.

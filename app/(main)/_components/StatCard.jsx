@@ -1,27 +1,27 @@
 import { cn } from '@/lib/utils'
 
 const TONES = {
-    violet: 'bg-violet-50 text-violet-600',
+    orange: 'bg-orange-50 text-orange-600',
     emerald: 'bg-emerald-50 text-emerald-600',
     amber: 'bg-amber-50 text-amber-600',
     sky: 'bg-sky-50 text-sky-600',
 }
 
-function StatCard({ icon: Icon, label, value, hint, tone = 'violet', loading = false }) {
+function StatCard({ icon: Icon, label, value, hint, tone = 'orange', loading = false }) {
     return (
-        <div className='rounded-2xl border border-slate-200 bg-white p-5 transition-shadow hover:shadow-md'>
-            <div className='flex items-center justify-between'>
-                <p className='text-sm font-medium text-slate-500'>{label}</p>
-                <span className={cn('flex size-9 items-center justify-center rounded-lg', TONES[tone])}>
-                    <Icon className='size-[18px]' />
+        <div className='surface rounded-2xl p-4'>
+            <div className='flex items-center justify-between gap-3'>
+                <p className='text-[13px] font-medium text-slate-500'>{label}</p>
+                <span className={cn('flex size-8 items-center justify-center rounded-lg', TONES[tone])}>
+                    <Icon className='size-4' strokeWidth={2} />
                 </span>
             </div>
             {loading ? (
-                <div className='mt-3 h-8 w-16 animate-pulse rounded-md bg-slate-100' />
+                <div className='mt-2 h-7 w-14 animate-pulse rounded-md bg-slate-100' />
             ) : (
-                <p className='mt-3 text-3xl font-bold tracking-tight text-slate-900'>{value}</p>
+                <p className='mt-1.5 text-2xl font-semibold tracking-tight text-slate-900'>{value}</p>
             )}
-            {hint && <p className='mt-1 text-xs text-slate-400'>{hint}</p>}
+            {hint && <p className='mt-0.5 text-xs text-slate-400'>{hint}</p>}
         </div>
     )
 }

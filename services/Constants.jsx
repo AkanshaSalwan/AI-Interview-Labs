@@ -1,4 +1,4 @@
-import { LayoutDashboard, LayoutGrid, Calendar, CalendarDays, List, WalletCards, Settings, Mic, ChartNoAxesColumnIncreasing } from "lucide-react"
+import { LayoutDashboard, LayoutGrid, CalendarDays, List, Settings, Mic, ChartNoAxesColumnIncreasing, KanbanSquare } from "lucide-react"
 import { Code2Icon, User2Icon, BriefcaseBusinessIcon, PuzzleIcon } from "lucide-react"
 
 
@@ -9,19 +9,14 @@ export const RecruiterSidebarOptions = [
     path: '/dashboard'
   },
   {
-    name: 'Scheduled Interviews',
-    icon: Calendar,
+    name: 'Interviews',
+    icon: List,
     path: '/scheduled-interviews'
   },
   {
-    name: 'All Interviews',
-    icon: List,
-    path: '/all-interviews'
-  },
-  {
-    name: 'Billing',
-    icon: WalletCards,
-    path: '/billing'
+    name: 'Candidates',
+    icon: KanbanSquare,
+    path: '/candidates'
   },
   // Settings is hidden for now; uncomment to bring it back.
   // {

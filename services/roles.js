@@ -17,7 +17,7 @@ const ROLE_HOME = {
 
 // Routes only a given role may open. Anything not listed is open to any signed-in user.
 const ROLE_ROUTES = {
-  recruiter: ['/dashboard', '/scheduled-interviews', '/all-interviews', '/billing'],
+  recruiter: ['/dashboard', '/scheduled-interviews', '/all-interviews', '/candidates'],
   candidate: ['/candidate'],
 }
 

@@ -70,7 +70,7 @@ function Onboarding() {
 
   return (
     <main className="relative flex min-h-screen items-center justify-center overflow-hidden bg-slate-50 px-6 py-12">
-      <div className="pointer-events-none absolute -top-40 left-1/2 size-[600px] -translate-x-1/2 rounded-full bg-violet-300/30 blur-3xl" />
+      <div className="pointer-events-none absolute -top-40 left-1/2 size-[600px] -translate-x-1/2 rounded-full bg-orange-200/40 blur-3xl" />
 
       <div className="relative w-full max-w-3xl">
         <div className="flex justify-center"><Logo /></div>
@@ -98,14 +98,14 @@ function Onboarding() {
                 className={cn(
                   'group relative cursor-pointer rounded-2xl border-2 bg-white p-6 text-left transition-all duration-200',
                   isSelected
-                    ? 'border-violet-600 shadow-xl shadow-violet-500/15'
-                    : 'border-slate-200 hover:-translate-y-0.5 hover:border-violet-300 hover:shadow-lg'
+                    ? 'border-orange-500 shadow-xl shadow-orange-500/15'
+                    : 'border-slate-200 hover:-translate-y-0.5 hover:border-orange-300 hover:shadow-lg'
                 )}
               >
                 <span
                   className={cn(
                     'absolute right-5 top-5 flex size-6 items-center justify-center rounded-full border-2 transition-colors',
-                    isSelected ? 'border-violet-600 bg-violet-600 text-white' : 'border-slate-300'
+                    isSelected ? 'border-orange-500 bg-orange-500 text-white' : 'border-slate-300'
                   )}
                 >
                   {isSelected && <Check className="size-3.5" strokeWidth={3} />}
@@ -115,14 +115,14 @@ function Onboarding() {
                   className={cn(
                     'flex size-12 items-center justify-center rounded-xl transition-colors',
                     isSelected
-                      ? 'bg-gradient-to-br from-violet-600 to-fuchsia-500 text-white'
-                      : 'bg-violet-50 text-violet-600'
+                      ? 'bg-orange-500 text-white'
+                      : 'bg-orange-50 text-orange-600'
                   )}
                 >
                   <Icon className="size-6" />
                 </div>
 
-                <p className="mt-5 text-xs font-semibold uppercase tracking-wider text-violet-600">{option.subtitle}</p>
+                <p className="mt-5 text-xs font-semibold uppercase tracking-wider text-orange-600">{option.subtitle}</p>
                 <h2 className="mt-1 text-xl font-bold text-slate-900">{option.title}</h2>
 
                 <ul className="mt-4 space-y-2.5">
@@ -143,7 +143,7 @@ function Onboarding() {
             type="button"
             onClick={saveRole}
             disabled={!selected || saving}
-            className="flex h-12 cursor-pointer items-center gap-2 rounded-xl bg-gradient-to-r from-violet-600 to-fuchsia-500 px-8 font-medium text-white shadow-lg shadow-violet-500/30 transition-all hover:shadow-xl hover:shadow-violet-500/40 disabled:cursor-not-allowed disabled:opacity-50 disabled:shadow-none"
+            className="flex h-12 cursor-pointer items-center gap-2 rounded-xl btn-orange px-8 font-medium text-white transition-[filter] hover:brightness-105 disabled:cursor-not-allowed disabled:opacity-50 disabled:shadow-none"
           >
             {saving ? <Loader2 className="size-5 animate-spin" /> : null}
             {saving ? 'Setting up your workspace…' : 'Continue'}

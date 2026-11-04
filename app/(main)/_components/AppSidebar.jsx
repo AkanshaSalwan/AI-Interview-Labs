@@ -59,23 +59,23 @@ export function AppSidebar() {
 
     return (
         <Sidebar className="app-sidebar-paper border-r border-orange-100/80 [--sidebar:transparent]">
-            <SidebarHeader className="gap-6 px-5 pt-6">
+            <SidebarHeader className="gap-5 px-4 pt-5">
                 <Link href="/" className="block">
                     <Logo size="lg" priority />
                 </Link>
                 <Link
                     href={isCandidate ? '/candidate/practice' : '/dashboard/create-interview'}
-                    className="btn-orange flex h-11 w-full items-center justify-center gap-2 rounded-xl text-sm font-medium text-white transition-[filter,transform] hover:brightness-105 active:scale-[0.99]"
+                    className="btn-orange flex h-10 w-full items-center justify-center gap-2 rounded-xl text-sm font-medium text-white transition-[filter,transform] hover:brightness-105 active:scale-[0.99]"
                 >
                     {isCandidate ? <Mic className="size-4" /> : <Plus className="size-4" />}
-                    {isCandidate ? 'Start Practice' : 'Create New Interview'}
+                    {isCandidate ? 'Start Practice' : 'New interview'}
                 </Link>
             </SidebarHeader>
 
             <SidebarContent className="px-3 pt-4">
                 <SidebarGroup>
                     <SidebarGroupLabel className="mb-1 text-[11px] font-medium uppercase tracking-wider text-slate-400">
-                        {isCandidate ? 'Candidate' : 'Recruiter'} workspace
+                        {isCandidate ? 'Candidate workspace' : 'HR portal'}
                     </SidebarGroupLabel>
                     <SidebarMenu className="gap-1">
                         {options.map((option) => {
@@ -87,7 +87,7 @@ export function AppSidebar() {
                                         render={<Link href={option.path} />}
                                         isActive={isActive}
                                         className={cn(
-                                            "h-10 gap-3 rounded-lg px-3 text-slate-600 transition-colors hover:bg-orange-50/70 hover:text-slate-900 [&_svg]:size-[18px]! [&_svg]:text-slate-500",
+                                            "h-9 gap-3 rounded-lg px-3 text-slate-600 transition-colors hover:bg-orange-50/70 hover:text-slate-900 [&_svg]:size-[18px]! [&_svg]:text-slate-500",
                                             isActive && "bg-orange-50 font-medium text-slate-900 data-active:bg-orange-50 data-active:text-slate-900 [&_svg]:text-orange-500"
                                         )}
                                     >

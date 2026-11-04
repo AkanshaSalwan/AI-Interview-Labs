@@ -1,83 +1,110 @@
-import React from 'react'
-import Image from 'next/image'
-import { Input } from '@base-ui/react'
-import { Button } from '@/components/ui/button'
-import { ArrowLeft, Clock, Copy, List, Mail, PhoneCall, Plus } from 'lucide-react'
+'use client'
+import React, { useMemo } from 'react'
 import Link from 'next/link'
+import { ArrowLeft, CheckCircle2, Clock, Copy, Mail, MessageCircle, PhoneCall, Plus, Hash, UsersRound } from 'lucide-react'
 import { toast } from '@/components/ui/toast'
+import { createClient } from '@/services/supabaseClient'
+import { useUser } from '@/app/provider'
+import { interviewUrl, openInviteEmail } from '@/services/interviewLinks'
+import InviteCandidateForm from '@/app/(main)/scheduled-interviews/[interview_id]/_components/InviteCandidateForm'
 
 
 function InterviewLink({ interview_id, formData, isScreening = false }) {
-  const Url = `${process.env.NEXT_PUBLIC_HOST_URL?.replace(/\/+$/, '')}/${interview_id}`
-
-  const GetInterviewUrl = () => {
-
-    return Url;
-  }
+  const supabase = useMemo(() => createClient(), [])
+  const { user } = useUser()
+  const url = interviewUrl(interview_id)
+  const jobPosition = formData?.jobPosition
+  const shareMessage = `You're invited to an AI voice interview for the ${jobPosition ?? ''} role. Start it here when you're ready: ${url}`
 
   const onCopyLink = async () => {
-    await navigator.clipboard.writeText(GetInterviewUrl());
+    await navigator.clipboard.writeText(url)
     toast.add({ title: 'Link Copied to Clipboard' })
   }
 
-  return (
-    <div className='flex flex-col items-center justify-center gap-5'>
-      <Image src={'/checked.png'} alt='checked'
-        width={80}
-        height={80}
-        className='w-[80px] h-[80px] '
-      />
-      <h2 className='font-bold text-lg mt-4'>
-        {isScreening ? 'Your Phone Screening Call is Ready' : 'Your AI Interview is Ready'}
-      </h2>
-      <p className='mt-3'>Share this link with your candidates to start the interview process</p>
+  const SHARE_OPTIONS = [
+    { label: 'Email', icon: Mail, onClick: () => openInviteEmail({ jobPosition, interviewId: interview_id }) },
+    { label: 'WhatsApp', icon: MessageCircle, onClick: () => window.open(`https://wa.me/?text=${encodeURIComponent(shareMessage)}`, '_blank', 'noopener') },
+    {
+      // Slack has no share link, so copy a ready-made message to paste into a channel or DM.
+      label: 'Slack',
+      icon: Hash,
+      onClick: async () => {
+        await navigator.clipboard.writeText(shareMessage)
+        toast.add({ title: 'Message copied', description: 'Paste it into Slack.' })
+      },
+    },
+  ]
 
-      {isScreening && (
-        <Link
-          href={`/interview/${interview_id}`}
-          className='inline-flex h-11 items-center gap-2 rounded-xl bg-gradient-to-r from-violet-600 to-fuchsia-500 px-6 font-medium text-white shadow-lg shadow-violet-500/30 transition-all hover:shadow-xl hover:shadow-violet-500/40'
-        >
-          <PhoneCall className='size-5' /> Start Call Now
-        </Link>
+  return (
+    <div className='mx-auto max-w-2xl space-y-4'>
+      <div className='text-center'>
+        <span className='mx-auto flex size-12 items-center justify-center rounded-full bg-emerald-50 text-emerald-600'>
+          <CheckCircle2 className='size-6' />
+        </span>
+        <h2 className='mt-3 text-xl font-semibold tracking-tight text-slate-900'>
+          {isScreening ? 'Your phone screening call is ready' : 'Your AI interview is ready'}
+        </h2>
+        <p className='mt-1 text-sm text-slate-500'>Assign it to candidates below, or share the link yourself.</p>
+        {isScreening && (
+          <Link
+            href={`/interview/${interview_id}`}
+            className='btn-orange mt-4 inline-flex h-10 items-center gap-2 rounded-[0.625rem] px-5 text-sm font-medium text-white hover:brightness-105'
+          >
+            <PhoneCall className='size-4' /> Start call now
+          </Link>
+        )}
+      </div>
+
+      {user?.email && (
+        <InviteCandidateForm
+          supabase={supabase}
+          interview={{ interview_id, jobPosition }}
+          recruiterEmail={user.email}
+          onInvited={() => {}}
+        />
       )}
 
-      <div className='mx-auto mt-6 w-full max-w-2xl rounded-xl border border-gray-100 bg-white p-6'>
+      <div className='surface rounded-2xl p-5'>
         <div className='flex items-center justify-between gap-3'>
-          <h2 className='font-bold'>Interview Link</h2>
-          <h2 className='whitespace-nowrap rounded-2xl bg-violet-50 px-2 py-1 text-sm text-primary'>Valid for 30 Days</h2>
+          <h2 className='text-[15px] font-semibold text-slate-900'>Interview link</h2>
+          <span className='flex items-center gap-1 text-xs text-slate-500'><Clock className='size-3.5' /> {formData?.interviewDuration} min</span>
         </div>
-        <div className='mt-2 flex gap-2 items-center'>
-          <Input
-            defaultValue={GetInterviewUrl()}
-            disabled={true}
-            className='h-8 w-full rounded-md border border-gray-200 bg-white px-3 text-xs text-gray-500 shadow-sm disabled:cursor-default disabled:opacity-100'
-          />
-          <Button onClick={() => onCopyLink()} ><Copy /> Copy Link</Button>
+        <div className='mt-3 flex gap-2'>
+          <input readOnly value={url} onFocus={(event) => event.target.select()} className='field text-xs text-slate-500' />
+          <button
+            type='button'
+            onClick={onCopyLink}
+            className='inline-flex h-10 shrink-0 cursor-pointer items-center gap-1.5 rounded-[0.625rem] border border-slate-200 bg-white px-4 text-sm font-medium text-slate-700 hover:bg-slate-50'
+          >
+            <Copy className='size-4' /> Copy
+          </button>
         </div>
-        <hr className='my-5' />
-
-        <div className='flex gap-5 items-center'>
-          <h2 className='text-sm text-gray-500 flex items-center gap-2'><Clock className='w-4 h-4' />  {formData?.interviewDuration} minutes</h2>
-          <h2 className='text-sm text-gray-500 flex items-center gap-2'><List className='w-4 h-4' /> 10 Questions</h2>
+        <div className='mt-4 grid grid-cols-3 gap-2 border-t border-slate-100 pt-4'>
+          {SHARE_OPTIONS.map(({ label, icon: Icon, onClick }) => (
+            <button
+              key={label}
+              type='button'
+              onClick={onClick}
+              className='inline-flex h-9 cursor-pointer items-center justify-center gap-1.5 rounded-[0.625rem] border border-slate-200 text-sm font-medium text-slate-700 transition-colors hover:border-orange-200 hover:bg-orange-50/60 hover:text-orange-700'
+            >
+              <Icon className='size-4' /> {label}
+            </button>
+          ))}
         </div>
-
       </div>
-      <div className='mx-auto mt-7 w-full max-w-2xl rounded-lg bg-white p-5'>
-        <h2 className='font-bold'>Share Via</h2>
-        <div className='gap-3 mt-3 grid grid-cols-2 md:grid-cols-4'>
-          <Button variant={'outline'} className='w-full'><Mail />Email</Button>
-          <Button variant={'outline'} className='w-full'><Mail />Slack</Button>
-          <Button variant={'outline'} className='w-full'><Mail />WhatsApp</Button>
-        </div>
 
-      </div>
-      <div className='mx-auto mt-7 w-full max-w-2xl flex gap-3 justify-between'>
-        <Link href={'/dashboard'} >
-          <Button variant={'outline'}><ArrowLeft /> Back To Dashboard</Button>
+      <div className='flex justify-between gap-3 pt-2'>
+        <Link href='/dashboard' className='inline-flex h-9 items-center gap-1.5 rounded-[0.625rem] border border-slate-200 bg-white px-3.5 text-sm font-medium text-slate-700 hover:bg-slate-50'>
+          <ArrowLeft className='size-4' /> Dashboard
         </Link>
-        <Link href={'/dashboard/create-interview'} >
-          <Button> <Plus />Create New Interview</Button>
-        </Link>
+        <div className='flex gap-2'>
+          <Link href={`/scheduled-interviews/${interview_id}`} className='inline-flex h-9 items-center gap-1.5 rounded-[0.625rem] border border-slate-200 bg-white px-3.5 text-sm font-medium text-slate-700 hover:bg-slate-50'>
+            <UsersRound className='size-4' /> Candidates
+          </Link>
+          <Link href='/dashboard/create-interview' className='btn-orange inline-flex h-9 items-center gap-1.5 rounded-[0.625rem] px-3.5 text-sm font-medium text-white hover:brightness-105'>
+            <Plus className='size-4' /> New interview
+          </Link>
+        </div>
       </div>
     </div>
   )

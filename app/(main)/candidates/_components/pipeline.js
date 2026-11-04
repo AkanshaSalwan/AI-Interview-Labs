@@ -1,0 +1,62 @@
+import { overallScore } from '@/services/scores'
+
+// Hiring stages, left to right. Every stage except "assigned" is a recruiter_status value.
+export const STAGES = [
+    { id: 'assigned', label: 'Assigned', dot: 'bg-slate-400', empty: 'Candidates who haven’t taken the interview yet' },
+    { id: 'pending', label: 'To review', dot: 'bg-orange-500', empty: 'Finished interviews wait here for your decision' },
+    { id: 'shortlisted', label: 'Shortlisted', dot: 'bg-sky-500', empty: 'Drag strong candidates here for the next round' },
+    { id: 'hired', label: 'Hired', dot: 'bg-emerald-500', empty: 'Drag your final pick here' },
+    { id: 'rejected', label: 'Rejected', dot: 'bg-red-400', empty: 'Candidates you won’t move forward' },
+]
+
+const DECISION_STAGES = new Set(['pending', 'shortlisted', 'hired', 'rejected'])
+
+// One entry per candidate per interview: their latest report (if any) merged with their invite (if any).
+export function buildCandidates(interviews, invites, reports) {
+    const interviewById = Object.fromEntries(interviews.map((item) => [item.interview_id, item]))
+    const byKey = new Map()
+
+    // Reports arrive newest first, so the first one per candidate is their latest.
+    for (const report of reports) {
+        const email = report.userEmail?.toLowerCase() || `report-${report.id}`
+        const key = `${report.interview_id}|${email}`
+        if (byKey.has(key) || !interviewById[report.interview_id]) continue
+        byKey.set(key, {
+            key,
+            interview: interviewById[report.interview_id],
+            name: report.userName,
+            email: report.userEmail,
+            report,
+            score: overallScore(report),
+            stage: DECISION_STAGES.has(report.recruiter_status) ? report.recruiter_status : 'pending',
+            date: report.created_at,
+        })
+    }
+
+    for (const invite of invites) {
+        const key = `${invite.interview_id}|${invite.candidate_email.toLowerCase()}`
+        const existing = byKey.get(key)
+        if (existing) {
+            existing.name ||= invite.candidate_name
+            continue
+        }
+        if (!interviewById[invite.interview_id]) continue
+        byKey.set(key, {
+            key,
+            interview: interviewById[invite.interview_id],
+            name: invite.candidate_name,
+            email: invite.candidate_email,
+            report: null,
+            score: null,
+            stage: 'assigned',
+            date: invite.created_at,
+        })
+    }
+
+    return [...byKey.values()]
+}
+
+// "Front end developer", "front end developer " and "Front End Developer" are the same role.
+export function roleKey(jobPosition) {
+    return String(jobPosition ?? '').trim().toLowerCase().replace(/\s+/g, ' ')
+}

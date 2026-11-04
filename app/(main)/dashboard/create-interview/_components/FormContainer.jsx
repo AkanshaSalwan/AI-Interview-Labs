@@ -35,9 +35,9 @@ function FormContainer({ formData, onHandleInputChange, GoToNext }) {
     }
 
     return (
-        <div className='p-5 bg-white rounded-2xl'>
-            <div className='mb-6 rounded-xl border border-violet-100 bg-violet-50/50 p-4'>
-                <h2 className='flex items-center gap-2 text-sm font-medium text-violet-800'>
+        <div className='surface rounded-2xl p-5'>
+            <div className='mb-6 rounded-xl border border-orange-100 bg-orange-50/50 p-4'>
+                <h2 className='flex items-center gap-2 text-sm font-medium text-orange-800'>
                     <Sparkles className='size-4' /> Start from a template
                 </h2>
                 <div className='mt-3 flex flex-wrap gap-2'>
@@ -46,7 +46,7 @@ function FormContainer({ formData, onHandleInputChange, GoToNext }) {
                             key={topic.id}
                             type='button'
                             onClick={() => applyTemplate(topic)}
-                            className={`flex cursor-pointer items-center gap-1.5 rounded-full border px-3 py-1 text-sm transition-colors ${formData?.jobPosition === topic.jobPosition ? 'border-violet-600 bg-violet-600 text-white' : 'border-slate-200 bg-white text-slate-700 hover:border-violet-300 hover:text-violet-700'}`}
+                            className={`flex cursor-pointer items-center gap-1.5 rounded-full border px-3 py-1 text-sm transition-colors ${formData?.jobPosition === topic.jobPosition ? 'border-orange-500 bg-orange-500 text-white' : 'border-slate-200 bg-white text-slate-700 hover:border-orange-300 hover:text-orange-700'}`}
                         >
                             <topic.icon className='size-3.5' />
                             {topic.jobPosition}
@@ -95,7 +95,7 @@ function FormContainer({ formData, onHandleInputChange, GoToNext }) {
                     {InterviewType.map((type) => (
                         <div
                             key={type.title}
-                            className={`flex cursor-pointer items-center gap-2 p-1 px-2 border rounded-2xl whitespace-nowrap hover:bg-secondary ${selectedTypes.includes(type.title) ? 'bg-violet-50 text-primary border-primary' : 'bg-white border-gray-300'}`}
+                            className={`flex cursor-pointer items-center gap-2 p-1 px-2 border rounded-2xl whitespace-nowrap hover:bg-secondary ${selectedTypes.includes(type.title) ? 'bg-orange-50 text-primary border-primary' : 'bg-white border-gray-300'}`}
                             onClick={() => toggleType(type.title)}
                         >
                             <type.icon className='w-4 h-4' />
