@@ -23,11 +23,12 @@ export const RecruiterSidebarOptions = [
     icon: WalletCards,
     path: '/billing'
   },
-  {
-    name: 'Settings',
-    icon: Settings,
-    path: '/settings'
-  }
+  // Settings is hidden for now; uncomment to bring it back.
+  // {
+  //   name: 'Settings',
+  //   icon: Settings,
+  //   path: '/settings'
+  // }
 ]
 
 export const CandidateSidebarOptions = [
@@ -51,11 +52,12 @@ export const CandidateSidebarOptions = [
     icon: ChartNoAxesColumnIncreasing,
     path: '/candidate/progress'
   },
-  {
-    name: 'Settings',
-    icon: Settings,
-    path: '/settings'
-  }
+  // Settings is hidden for candidates for now; uncomment to bring it back.
+  // {
+  //   name: 'Settings',
+  //   icon: Settings,
+  //   path: '/settings'
+  // }
 ]
 
 export const InterviewType = [
