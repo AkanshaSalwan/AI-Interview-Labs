@@ -2,11 +2,12 @@
 import React, { useContext, useEffect, useMemo, useState } from 'react'
 import Image from 'next/image'
 import { useParams, useRouter } from 'next/navigation'
-import { Clock, Info, Loader2Icon, Video } from 'lucide-react'
+import { Clock, Loader2Icon, Video } from 'lucide-react'
 import { Input } from '@/components/ui/input'
 import { InterviewDataContext } from '@/context/InterviewDataContext'
 import { createClient } from '@/services/supabaseClient'
 import { useUser } from '@/app/provider'
+import SetupCheck from '../_components/SetupCheck'
 
 
 
@@ -22,6 +23,7 @@ function Interview() {
     const { interviewInfo, setInterviewInfo } = useContext(InterviewDataContext);
     const router = useRouter();
     const [loading, setLoading] = useState(false);
+    const [micReady, setMicReady] = useState(false);
     const { user } = useUser();
 
     // Signed-in users (e.g. candidates practising) don't need to retype their details.
@@ -146,16 +148,10 @@ function Interview() {
                         />
                     </div>
 
-                    <div className='flex items-start gap-2.5 rounded-xl bg-orange-50/70 p-3.5 ring-1 ring-orange-100'>
-                        <Info className='mt-0.5 size-4 shrink-0 text-orange-500' />
-                        <div>
-                            <h2 className='text-[13px] font-medium text-slate-900'>Before you begin</h2>
-                            <ul className='mt-1 space-y-0.5 text-xs text-slate-600'>
-                                <li>· Use a stable internet connection</li>
-                                <li>· Allow microphone access when asked</li>
-                                <li>· Find a quiet place for the interview</li>
-                            </ul>
-                        </div>
+                    <div>
+                        <h2 className='mb-2 text-[13px] font-medium text-slate-700'>Check your setup</h2>
+                        <SetupCheck onReadyChange={setMicReady} />
+                        <p className='mt-2 text-xs text-slate-500'>Find a quiet place and speak clearly. The interview starts as soon as you join.</p>
                     </div>
 
                     <div className='space-y-2'>
@@ -167,13 +163,17 @@ function Interview() {
                                 loading ||
                                 Boolean(loadError) ||
                                 !userName.trim() ||
-                                !userEmail.trim()
+                                !userEmail.trim() ||
+                                !micReady
                             }
                             onClick={onJoinInterview}
                         >
                             {loading ? <Loader2Icon className='size-4 animate-spin' /> : <Video className='size-4' />}
                             Join interview
                         </button>
+                        {!micReady && !loadError && (
+                            <p className='text-center text-xs text-slate-500'>Test your microphone to continue.</p>
+                        )}
                         {joinError && (
                             <p role='alert' className='text-[13px] text-red-600'>
                                 {joinError}

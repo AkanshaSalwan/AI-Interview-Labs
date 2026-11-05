@@ -126,7 +126,13 @@ function InterviewDetails({ interviewId }) {
         const { error } = await supabase.from('interview feedback').update(changes).eq('id', reportId)
         if (error) {
             setReports(previous)
-            toast.add({ title: 'Could not save the change', description: error.message })
+            toast.add({
+                title: 'Could not save the change',
+                // Unknown column (PGRST204) or not allowed to update it (42501): migration 010 adds the candidate message.
+                description: ['PGRST204', '42501'].includes(error.code) && 'candidate_message' in changes
+                    ? 'Run supabase/migrations/010_deadlines_and_messages.sql in Supabase first.'
+                    : error.message,
+            })
             return false
         }
         return true
@@ -134,8 +140,10 @@ function InterviewDetails({ interviewId }) {
 
     const onDecision = (reportId, recruiter_status) => updateReport(reportId, { recruiter_status })
 
-    const onSaveNotes = async (reportId, recruiter_notes) => {
-        if (await updateReport(reportId, { recruiter_notes })) toast.add({ title: 'Notes saved' })
+    const onSaveField = async (reportId, changes, successTitle) => {
+        const saved = await updateReport(reportId, changes)
+        if (saved) toast.add({ title: successTitle })
+        return saved
     }
 
     const onRemoveInvite = async (invite) => {
@@ -275,7 +283,7 @@ function InterviewDetails({ interviewId }) {
                                 candidate={candidate}
                                 rank={rankOf.get(candidate.key)}
                                 onDecision={onDecision}
-                                onSaveNotes={onSaveNotes}
+                                onSaveField={onSaveField}
                                 onResendInvite={onResendInvite}
                                 onRemoveInvite={onRemoveInvite}
                             />

@@ -3,6 +3,7 @@ import Link from 'next/link'
 import moment from 'moment'
 import { Check, GripVertical, Sparkles } from 'lucide-react'
 import { isRecommended } from '@/services/scores'
+import { dueStatus } from '@/services/invites'
 import { cn } from '@/lib/utils'
 
 function scoreTone(score) {
@@ -15,6 +16,7 @@ function scoreTone(score) {
 function CandidateCard({ candidate, selected, selectable, onToggleSelect, onDragStart, onDragEnd, dragging }) {
     const draggable = Boolean(candidate.report)
     const displayName = candidate.name || candidate.email?.split('@')[0] || 'Candidate'
+    const due = dueStatus(candidate.dueAt)
 
     return (
         <li
@@ -65,7 +67,9 @@ function CandidateCard({ candidate, selected, selectable, onToggleSelect, onDrag
                         {candidate.score}/10
                     </span>
                 ) : (
-                    <span className='rounded-full bg-slate-100 px-2 py-0.5 text-[11px] font-medium text-slate-500'>Not taken</span>
+                    <span className={cn('rounded-full px-2 py-0.5 text-[11px] font-medium', due?.badge ?? 'bg-slate-100 text-slate-500')}>
+                        {due?.label ?? 'Not taken'}
+                    </span>
                 )}
                 {candidate.report && isRecommended(candidate.report) && (
                     <span className='flex items-center gap-0.5 rounded-full bg-orange-50 px-1.5 py-0.5 text-[11px] font-medium text-orange-700'>

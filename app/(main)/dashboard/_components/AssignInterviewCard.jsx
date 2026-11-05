@@ -3,13 +3,14 @@ import { useState } from 'react'
 import Link from 'next/link'
 import moment from 'moment'
 import { CheckCircle2, Clock3, Loader2, Plus, Send, UserRoundPlus } from 'lucide-react'
-import { assignInterview } from '@/services/invites'
+import { assignInterview, dueStatus, todayInputValue } from '@/services/invites'
 
 // The HR portal's main action: send one of your interviews to a candidate's dashboard.
 function AssignInterviewCard({ supabase, recruiterEmail, interviews, invites, loading, onAssigned }) {
     const [interviewId, setInterviewId] = useState('')
     const [name, setName] = useState('')
     const [email, setEmail] = useState('')
+    const [dueDate, setDueDate] = useState('')
     const [sending, setSending] = useState(false)
 
     const jobByInterview = Object.fromEntries(interviews.map((item) => [item.interview_id, item.jobPosition]))
@@ -22,13 +23,14 @@ function AssignInterviewCard({ supabase, recruiterEmail, interviews, invites, lo
         event.preventDefault()
         if (!selected) return
         setSending(true)
-        const invite = await assignInterview(supabase, { interview: selected, recruiterEmail, candidateEmail: email, candidateName: name })
+        const invite = await assignInterview(supabase, { interview: selected, recruiterEmail, candidateEmail: email, candidateName: name, dueDate })
         setSending(false)
         if (!invite) return
 
         onAssigned(invite)
         setName('')
         setEmail('')
+        setDueDate('')
     }
 
     return (
@@ -91,14 +93,26 @@ function AssignInterviewCard({ supabase, recruiterEmail, interviews, invites, lo
                                 />
                             </label>
                         </div>
-                        <button
-                            type='submit'
-                            disabled={sending}
-                            className='btn-orange mt-1 inline-flex h-10 w-full cursor-pointer items-center justify-center gap-2 rounded-[0.625rem] text-sm font-medium text-white transition-[filter] hover:brightness-105 disabled:opacity-60'
-                        >
-                            {sending ? <Loader2 className='size-4 animate-spin' /> : <Send className='size-4' />}
-                            Assign interview
-                        </button>
+                        <div className='grid items-end gap-2.5 sm:grid-cols-2'>
+                            <label className='block'>
+                                <span className='mb-1 block text-xs font-medium text-slate-500'>Complete by <span className='font-normal text-slate-400'>(optional)</span></span>
+                                <input
+                                    type='date'
+                                    min={todayInputValue()}
+                                    value={dueDate}
+                                    onChange={(event) => setDueDate(event.target.value)}
+                                    className='field cursor-pointer'
+                                />
+                            </label>
+                            <button
+                                type='submit'
+                                disabled={sending}
+                                className='btn-orange inline-flex h-10 w-full cursor-pointer items-center justify-center gap-2 rounded-[0.625rem] text-sm font-medium text-white transition-[filter] hover:brightness-105 disabled:opacity-60'
+                            >
+                                {sending ? <Loader2 className='size-4 animate-spin' /> : <Send className='size-4' />}
+                                Assign interview
+                            </button>
+                        </div>
                     </div>
                 )}
 
@@ -108,6 +122,7 @@ function AssignInterviewCard({ supabase, recruiterEmail, interviews, invites, lo
                         <ul className='space-y-2'>
                             {recent.map((invite) => {
                                 const done = invite.status === 'completed'
+                                const overdue = dueStatus(invite.due_at, done)?.overdue
                                 return (
                                     <li key={invite.id} className='flex items-center gap-2.5'>
                                         <span className='flex size-7 shrink-0 items-center justify-center rounded-full bg-orange-50 text-[11px] font-semibold text-orange-600'>
@@ -121,10 +136,12 @@ function AssignInterviewCard({ supabase, recruiterEmail, interviews, invites, lo
                                         </div>
                                         <span className={done
                                             ? 'flex items-center gap-1 rounded-full bg-emerald-50 px-2 py-0.5 text-[11px] font-medium text-emerald-700'
-                                            : 'flex items-center gap-1 rounded-full bg-slate-100 px-2 py-0.5 text-[11px] font-medium text-slate-600'}
+                                            : overdue
+                                                ? 'flex items-center gap-1 rounded-full bg-red-50 px-2 py-0.5 text-[11px] font-medium text-red-600'
+                                                : 'flex items-center gap-1 rounded-full bg-slate-100 px-2 py-0.5 text-[11px] font-medium text-slate-600'}
                                         >
                                             {done ? <CheckCircle2 className='size-3' /> : <Clock3 className='size-3' />}
-                                            {done ? 'Completed' : 'Not started'}
+                                            {done ? 'Completed' : overdue ? 'Overdue' : 'Not started'}
                                         </span>
                                     </li>
                                 )

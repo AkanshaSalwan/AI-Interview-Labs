@@ -50,6 +50,7 @@ export function buildCandidates(interviews, invites, reports) {
             score: null,
             stage: 'assigned',
             date: invite.created_at,
+            dueAt: invite.due_at ?? null,
         })
     }
 

@@ -1,7 +1,7 @@
 import Link from 'next/link'
 import moment from 'moment'
 import { Clock3, Play } from 'lucide-react'
-import { DECISIONS } from '@/services/invites'
+import { DECISIONS, dueStatus } from '@/services/invites'
 import { cn } from '@/lib/utils'
 
 function AssignedInterviewItem({ invite, compact = false }) {
@@ -9,6 +9,7 @@ function AssignedInterviewItem({ invite, compact = false }) {
     const jobPosition = invite.interview?.jobPosition ?? 'Interview'
     // `decision` exists once migration 008 has run; until then a finished interview just shows "Submitted".
     const decision = invite.decision ? DECISIONS[invite.decision] : null
+    const due = dueStatus(invite.due_at, completed)
 
     return (
         <li className='flex items-center gap-3 px-5 py-3 transition-colors hover:bg-orange-50/40'>
@@ -26,6 +27,7 @@ function AssignedInterviewItem({ invite, compact = false }) {
                             ? `Submitted ${moment(invite.completed_at).fromNow()}`
                             : `Assigned ${moment(invite.created_at).fromNow()}`}
                     </span>
+                    {due && <span className={cn('rounded-full px-1.5 py-px font-medium', due.badge)}>{due.label}</span>}
                 </p>
             </div>
             {completed ? (

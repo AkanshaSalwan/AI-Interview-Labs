@@ -5,6 +5,7 @@ import Link from 'next/link'
 import moment from 'moment'
 import { ArrowRight, Award, BellRing, CalendarDays, ChartNoAxesColumnIncreasing, History, Mic, Play, ShieldAlert, Sparkles, Video, X } from 'lucide-react'
 import { RECRUITER_NOT_APPROVED_NOTICE } from '@/services/userProfile'
+import { dueStatus } from '@/services/invites'
 import { averageScore } from '@/services/scores'
 import { usePracticeResults } from '../_components/usePracticeResults'
 import { useAssignedInterviews } from '../_components/useAssignedInterviews'
@@ -79,6 +80,11 @@ function CandidateDashboard() {
                                 {pendingInvites[0].interview?.jobPosition ?? 'Interview'}
                                 {pendingInvites[0].interview?.duration ? ` · ${pendingInvites[0].interview.duration} min` : ''}
                                 {' · '}assigned {moment(pendingInvites[0].created_at).fromNow()}
+                                {dueStatus(pendingInvites[0].due_at) && (
+                                    <span className={`ml-2 rounded-full px-2 py-0.5 text-xs font-medium ${dueStatus(pendingInvites[0].due_at).badge}`}>
+                                        {dueStatus(pendingInvites[0].due_at).label}
+                                    </span>
+                                )}
                             </p>
                         </div>
                         <div className='flex shrink-0 gap-2 sm:pr-6'>

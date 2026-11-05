@@ -10,7 +10,7 @@ import { useUser } from '@/app/provider';
 import { useRouter } from 'next/navigation';
 
 
-function QuestionList({ formData, onCreateLink, finishLabel = 'Create Interview Link & Finish' }) {
+function QuestionList({ formData, onCreateLink, finishLabel = 'Create Interview Link & Finish', editable = false }) {
   const supabase = createClient();
   const { user } = useUser();
   const router = useRouter();
@@ -113,6 +113,15 @@ function QuestionList({ formData, onCreateLink, finishLabel = 'Create Interview 
   }
 
   const onFinish = async () => {
+    // Drop questions HR emptied out while editing.
+    const finalQuestions = questionList
+      .map((item) => ({ ...item, question: String(item.question ?? '').trim() }))
+      .filter((item) => item.question);
+    if (!finalQuestions.length) {
+      toast.add({ title: 'Add at least one question' });
+      return;
+    }
+
     setSaveLoading(true);
     const interviewId = uuidv4();
     try {
@@ -124,7 +133,7 @@ function QuestionList({ formData, onCreateLink, finishLabel = 'Create Interview 
             jobDescription: formData.jobDescription,
             duration: formData.interviewDuration,
             type: Array.isArray(formData.types) ? formData.types.join(',') : formData.types,
-            questionList: questionList,
+            questionList: finalQuestions,
             userEmail: user?.email,
             interview_id: interviewId,
             ...(formData.isPractice && { is_practice: true }),
@@ -167,7 +176,7 @@ function QuestionList({ formData, onCreateLink, finishLabel = 'Create Interview 
 
       {!loading && questionList?.length > 0 && (
         <div>
-          <QuestionListContainer questionList={questionList} />
+          <QuestionListContainer questionList={questionList} onChange={editable ? setQuestionList : undefined} />
           <div className='mt-6 flex justify-end'>
             <button
               type='button'

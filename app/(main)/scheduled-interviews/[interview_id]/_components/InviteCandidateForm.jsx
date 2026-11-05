@@ -1,23 +1,25 @@
 'use client'
 import { useState } from 'react'
 import { Loader2, Send } from 'lucide-react'
-import { assignInterview } from '@/services/invites'
+import { assignInterview, todayInputValue } from '@/services/invites'
 
 function InviteCandidateForm({ supabase, interview, recruiterEmail, onInvited }) {
     const [name, setName] = useState('')
     const [email, setEmail] = useState('')
+    const [dueDate, setDueDate] = useState('')
     const [sending, setSending] = useState(false)
 
     const sendInvite = async (event) => {
         event.preventDefault()
         setSending(true)
-        const invite = await assignInterview(supabase, { interview, recruiterEmail, candidateEmail: email, candidateName: name })
+        const invite = await assignInterview(supabase, { interview, recruiterEmail, candidateEmail: email, candidateName: name, dueDate })
         setSending(false)
         if (!invite) return
 
         onInvited(invite)
         setName('')
         setEmail('')
+        setDueDate('')
     }
 
     return (
@@ -26,7 +28,7 @@ function InviteCandidateForm({ supabase, interview, recruiterEmail, onInvited })
             <p className='mt-0.5 text-sm text-slate-500'>
                 Enter their email. They’ll find this interview when they log in.
             </p>
-            <div className='mt-4 grid gap-2.5 sm:grid-cols-[1fr_1.4fr_auto]'>
+            <div className='mt-4 grid gap-2.5 sm:grid-cols-2 lg:grid-cols-[1fr_1.3fr_150px_auto]'>
                 <input
                     value={name}
                     onChange={(event) => setName(event.target.value)}
@@ -40,6 +42,15 @@ function InviteCandidateForm({ supabase, interview, recruiterEmail, onInvited })
                     onChange={(event) => setEmail(event.target.value)}
                     placeholder='candidate@email.com'
                     className='field'
+                />
+                <input
+                    type='date'
+                    min={todayInputValue()}
+                    value={dueDate}
+                    onChange={(event) => setDueDate(event.target.value)}
+                    title='Complete by (optional)'
+                    aria-label='Complete by (optional)'
+                    className='field cursor-pointer'
                 />
                 <button
                     type='submit'

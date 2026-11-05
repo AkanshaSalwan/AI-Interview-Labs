@@ -78,6 +78,7 @@ function CreateInterview({ isScreening = false }) {
                 />
                     : step === 2 ? <QuestionList
                         formData={formData}
+                        editable
                         onCreateLink={(interview_id) => onCreateLink(interview_id)}
                     /> :
                     step === 3 ? <InterviewLink interview_id={interview_id}

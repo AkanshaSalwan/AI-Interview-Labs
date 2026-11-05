@@ -1,7 +1,7 @@
 'use client'
 import { CalendarDays } from 'lucide-react'
 import { useAssignedInterviews } from '../_components/useAssignedInterviews'
-import AssignedInterviewItem from '../_components/AssignedInterviewItem'
+import ApplicationCard from '../_components/ApplicationCard'
 
 function Header() {
     return (
@@ -44,7 +44,7 @@ function InterviewsPage() {
                 </div>
             ) : (
                 <div className='space-y-8'>
-                    {[{ title: 'Waiting for you', rows: pending }, { title: 'Submitted · HR decision', rows: completed }]
+                    {[{ title: 'Waiting for you', rows: pending }, { title: 'Submitted', rows: completed }]
                         .filter((section) => section.rows.length)
                         .map((section) => (
                             <section key={section.title}>
@@ -52,8 +52,8 @@ function InterviewsPage() {
                                     {section.title}
                                     <span className='rounded-full bg-orange-50 px-2 py-0.5 text-xs text-orange-600'>{section.rows.length}</span>
                                 </h2>
-                                <ul className='surface divide-y divide-orange-50 overflow-hidden rounded-2xl'>
-                                    {section.rows.map((invite) => <AssignedInterviewItem key={invite.id} invite={invite} />)}
+                                <ul className='space-y-3'>
+                                    {section.rows.map((invite) => <ApplicationCard key={invite.id} invite={invite} />)}
                                 </ul>
                             </section>
                         ))}

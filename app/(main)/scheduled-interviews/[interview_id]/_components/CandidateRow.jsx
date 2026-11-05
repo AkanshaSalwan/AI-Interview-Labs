@@ -5,7 +5,7 @@ import { BadgeCheck, Check, ChevronDown, Loader2, Mail, MessageSquareText, Trash
 import TranscriptView from '@/components/interview/TranscriptView'
 import DetailedFeedback from '@/components/interview/DetailedFeedback'
 import { isRecommended } from '@/services/scores'
-import { DECISIONS } from '@/services/invites'
+import { DECISIONS, dueStatus } from '@/services/invites'
 import { cn } from '@/lib/utils'
 
 const RATING_LABELS = {
@@ -28,21 +28,49 @@ function scoreTone(score) {
     return 'text-red-600'
 }
 
-function CandidateRow({ candidate, rank, onDecision, onSaveNotes, onResendInvite, onRemoveInvite }) {
+// A text box saved to one column of the report, with a Save button that appears once it changes.
+function ReportTextField({ title, hint, placeholder, initialValue, saveLabel, onSave }) {
+    const [value, setValue] = useState(initialValue ?? '')
+    const [saving, setSaving] = useState(false)
+    const [saved, setSaved] = useState(initialValue ?? '')
+
+    const save = async () => {
+        setSaving(true)
+        if (await onSave(value)) setSaved(value)
+        setSaving(false)
+    }
+
+    return (
+        <div>
+            <h4 className='text-sm font-semibold text-slate-900'>{title}</h4>
+            {hint && <p className='text-xs text-slate-500'>{hint}</p>}
+            <textarea
+                value={value}
+                onChange={(event) => setValue(event.target.value)}
+                rows={3}
+                placeholder={placeholder}
+                className='mt-2 w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm outline-none focus:border-orange-300 focus:ring-3 focus:ring-orange-100'
+            />
+            {value !== saved && (
+                <button
+                    type='button'
+                    onClick={save}
+                    disabled={saving}
+                    className='btn-orange mt-2 inline-flex h-8 cursor-pointer items-center gap-1.5 rounded-lg px-3 text-xs font-medium text-white hover:brightness-105 disabled:opacity-60'
+                >
+                    {saving && <Loader2 className='size-3.5 animate-spin' />} {saveLabel}
+                </button>
+            )}
+        </div>
+    )
+}
+
+function CandidateRow({ candidate, rank, onDecision, onSaveField, onResendInvite, onRemoveInvite }) {
     const [open, setOpen] = useState(false)
-    const [notes, setNotes] = useState(candidate.report?.recruiter_notes ?? '')
-    const [savingNotes, setSavingNotes] = useState(false)
 
     const report = candidate.report
     const feedback = report?.feedback ?? {}
     const decision = report?.recruiter_status ?? 'pending'
-    const notesChanged = notes !== (report?.recruiter_notes ?? '')
-
-    const saveNotes = async () => {
-        setSavingNotes(true)
-        await onSaveNotes(report.id, notes)
-        setSavingNotes(false)
-    }
 
     return (
         <li className='bg-white'>
@@ -112,7 +140,12 @@ function CandidateRow({ candidate, rank, onDecision, onSaveNotes, onResendInvite
                     </>
                 ) : (
                     <div className='flex items-center gap-1.5'>
-                        <span className='rounded-full bg-amber-50 px-2.5 py-1 text-xs font-medium text-amber-700'>Not started</span>
+                        <span className='rounded-full bg-slate-100 px-2.5 py-1 text-xs font-medium text-slate-600'>Not started</span>
+                        {dueStatus(candidate.invite?.due_at) && (
+                            <span className={cn('rounded-full px-2.5 py-1 text-xs font-medium', dueStatus(candidate.invite.due_at).badge)}>
+                                {dueStatus(candidate.invite.due_at).label}
+                            </span>
+                        )}
                         <button
                             type='button'
                             title='Resend invite email'
@@ -167,26 +200,21 @@ function CandidateRow({ candidate, rank, onDecision, onSaveNotes, onResendInvite
                             </div>
                         )}
                         <DetailedFeedback feedback={feedback} />
-                        <div>
-                            <h4 className='text-sm font-semibold text-slate-900'>Private notes</h4>
-                            <textarea
-                                value={notes}
-                                onChange={(event) => setNotes(event.target.value)}
-                                rows={3}
-                                placeholder='Only you can see these notes.'
-                                className='mt-2 w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm outline-none focus:border-orange-300 focus:ring-3 focus:ring-orange-100'
-                            />
-                            {notesChanged && (
-                                <button
-                                    type='button'
-                                    onClick={saveNotes}
-                                    disabled={savingNotes}
-                                    className='btn-orange mt-2 inline-flex h-8 cursor-pointer items-center gap-1.5 rounded-lg px-3 text-xs font-medium text-white hover:brightness-105 disabled:opacity-60'
-                                >
-                                    {savingNotes && <Loader2 className='size-3.5 animate-spin' />} Save notes
-                                </button>
-                            )}
-                        </div>
+                        <ReportTextField
+                            title='Message to candidate'
+                            hint='Shown on their dashboard with your decision, e.g. next-round details.'
+                            placeholder='e.g. Great interview! Our team will call you on Monday at 11 AM for the next round.'
+                            initialValue={report.candidate_message}
+                            saveLabel='Send message'
+                            onSave={(value) => onSaveField(report.id, { candidate_message: value.trim() || null }, 'Message sent to the candidate')}
+                        />
+                        <ReportTextField
+                            title='Private notes'
+                            placeholder='Only you can see these notes.'
+                            initialValue={report.recruiter_notes}
+                            saveLabel='Save notes'
+                            onSave={(value) => onSaveField(report.id, { recruiter_notes: value }, 'Notes saved')}
+                        />
                     </div>
 
                     <div>
