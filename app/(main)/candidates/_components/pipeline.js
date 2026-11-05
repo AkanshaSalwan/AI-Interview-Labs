@@ -2,11 +2,12 @@ import { overallScore } from '@/services/scores'
 
 // Hiring stages, left to right. Every stage except "assigned" is a recruiter_status value.
 export const STAGES = [
-    { id: 'assigned', label: 'Assigned', dot: 'bg-slate-400', empty: 'Candidates who haven’t taken the interview yet' },
-    { id: 'pending', label: 'To review', dot: 'bg-orange-500', empty: 'Finished interviews wait here for your decision' },
-    { id: 'shortlisted', label: 'Shortlisted', dot: 'bg-sky-500', empty: 'Drag strong candidates here for the next round' },
-    { id: 'hired', label: 'Hired', dot: 'bg-emerald-500', empty: 'Drag your final pick here' },
-    { id: 'rejected', label: 'Rejected', dot: 'bg-red-400', empty: 'Candidates you won’t move forward' },
+// `dot` marks the stage everywhere, `pill` is its badge in the list, `tint` its summary card.
+    { id: 'assigned', label: 'Assigned', dot: 'bg-blue-500', pill: 'bg-blue-50 text-blue-700', tint: 'bg-blue-50/50', empty: 'Candidates who haven’t taken the interview yet' },
+    { id: 'pending', label: 'To review', dot: 'bg-orange-500', pill: 'bg-orange-50 text-orange-700', tint: 'bg-orange-50/60', empty: 'Finished interviews wait here for your decision' },
+    { id: 'shortlisted', label: 'Shortlisted', dot: 'bg-violet-500', pill: 'bg-violet-50 text-violet-700', tint: 'bg-violet-50/50', empty: 'Drag strong candidates here for the next round' },
+    { id: 'hired', label: 'Hired', dot: 'bg-emerald-500', pill: 'bg-emerald-50 text-emerald-700', tint: 'bg-emerald-50/50', empty: 'Drag your final pick here' },
+    { id: 'rejected', label: 'Rejected', dot: 'bg-red-500', pill: 'bg-red-50 text-red-600', tint: 'bg-red-50/50', empty: 'Candidates you won’t move forward' },
 ]
 
 const DECISION_STAGES = new Set(['pending', 'shortlisted', 'hired', 'rejected'])
@@ -38,6 +39,7 @@ export function buildCandidates(interviews, invites, reports) {
         const existing = byKey.get(key)
         if (existing) {
             existing.name ||= invite.candidate_name
+            existing.invite = invite
             continue
         }
         if (!interviewById[invite.interview_id]) continue
@@ -46,6 +48,7 @@ export function buildCandidates(interviews, invites, reports) {
             interview: interviewById[invite.interview_id],
             name: invite.candidate_name,
             email: invite.candidate_email,
+            invite,
             report: null,
             score: null,
             stage: 'assigned',

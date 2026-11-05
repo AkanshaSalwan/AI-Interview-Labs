@@ -1,5 +1,4 @@
 'use client'
-import Link from 'next/link'
 import moment from 'moment'
 import { Check, GripVertical, Sparkles } from 'lucide-react'
 import { isRecommended } from '@/services/scores'
@@ -13,7 +12,7 @@ function scoreTone(score) {
 }
 
 // One candidate on the pipeline board. Finished interviews can be dragged and picked for comparison.
-function CandidateCard({ candidate, selected, selectable, onToggleSelect, onDragStart, onDragEnd, dragging }) {
+function CandidateCard({ candidate, selected, selectable, onToggleSelect, onDragStart, onDragEnd, dragging, onOpen }) {
     const draggable = Boolean(candidate.report)
     const displayName = candidate.name || candidate.email?.split('@')[0] || 'Candidate'
     const due = dueStatus(candidate.dueAt)
@@ -35,13 +34,14 @@ function CandidateCard({ candidate, selected, selectable, onToggleSelect, onDrag
                     {displayName[0].toUpperCase()}
                 </span>
                 <div className='min-w-0 flex-1'>
-                    <Link
-                        href={`/scheduled-interviews/${candidate.interview.interview_id}`}
-                        className='block truncate text-[13px] font-medium text-slate-900 hover:text-orange-700'
-                        title={`${candidate.email ?? ''} · open full report`}
+                    <button
+                        type='button'
+                        onClick={() => onOpen(candidate)}
+                        className='block max-w-full cursor-pointer truncate text-left text-[13px] font-medium text-slate-900 hover:text-orange-700'
+                        title={candidate.email}
                     >
                         {displayName}
-                    </Link>
+                    </button>
                     <p className='truncate text-xs text-slate-500'>{candidate.interview.jobPosition}</p>
                 </div>
                 {selectable && (

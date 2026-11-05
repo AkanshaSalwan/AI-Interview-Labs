@@ -251,10 +251,11 @@ function StartInterview() {
     const vapi = vapiRef.current
     if (!vapi || !interviewInfo || callActiveRef.current || isStarting) return
 
-    const questionList = interviewInfo?.interviewData?.questionList
-      ?.map((item) => item?.question)
+    // Numbered, one per line: questions often contain commas, so a comma-separated list blurs them together.
+    const questions = (interviewInfo?.interviewData?.questionList ?? [])
+      .map((item) => item?.question?.trim())
       .filter(Boolean)
-      .join(', ')
+    const questionList = questions.map((question, index) => `${index + 1}. ${question}`).join('\n')
 
     const assistantOptions = {
       name: 'AI Recruiter',
@@ -286,15 +287,20 @@ You are an AI voice assistant conducting interviews.
 Your job is to ask candidates provided interview questions, assess their responses.
 Begin the conversation with a friendly introduction, setting a relaxed yet professional tone. Example:
 "Hey there! Welcome to your ${interviewInfo?.interviewData?.jobPosition} interview. Let's get started with a few questions!"
-Ask one question at a time and wait for the candidate's response before proceeding. Keep the questions clear and concise. Below Are the questions ask one by one:
-Questions: ${questionList}
+This interview has exactly ${questions.length} questions. Ask ALL of them, one at a time, in this order:
+${questionList}
+Rules for the questions:
+- Ask every question above, in order. Do not skip any, merge two into one, or add new questions of your own.
+- Ask each question in its original meaning; you may say it naturally, but keep its content.
+- Wait for the candidate's full answer before moving on. Before each one, say which it is, e.g. "Question 3 of ${questions.length}".
+- If the candidate asks you to repeat a question, repeat it. If they say they don't know, accept that and move to the next question.
 If the candidate struggles, offer hints or rephrase the question without giving away the answer. Example:
 "Need a hint? Think about the main trade-offs involved here!"
 Provide brief, encouraging feedback after each answer. Example:
 "Nice! That's a solid answer."
 "Hmm, not quite! Want to try again?"
 Keep the conversation natural and engaging—use casual phrases like "Alright, next up..." or "Let's tackle a tricky one!"
-After 5-7 questions, wrap up the interview smoothly by summarizing their performance. Example:
+Only after the last question (question ${questions.length}) has been answered, wrap up the interview smoothly by summarizing their performance. Example:
 "That was great! You handled some tough questions well. Keep sharpening your skills!"
 End on a positive note:
 "Thanks for chatting! Hope to see you crushing projects soon!"
@@ -363,6 +369,16 @@ Key Guidelines:
         throw new Error('No interview transcript was captured.')
       }
 
+      // Nothing to score if the candidate never spoke (call ended early, or the mic didn't pick them up).
+      if (!conversation.some((message) => message.role === 'user')) {
+        setStatusText('Interview ended before any answers were recorded.')
+        toast.add({
+          title: 'No answers were recorded',
+          description: 'We didn’t hear you answer any question, so there is no report. Check your microphone and start the interview again.',
+        })
+        return
+      }
+
       const currentInterviewInfo = interviewInfoRef.current
       const result = await axios.post('/api/ai-feedback', {
         conversation,
@@ -414,7 +430,10 @@ Key Guidelines:
         router.push(`/interview/${interviewId}/completed?feedback=${savedId}`)
       }
     } catch (error) {
-      console.error('Unable to generate interview feedback:', error)
+      // A 4xx is a known, explained problem (shown in the toast), not a crash.
+      const status = error?.response?.status
+      if (status >= 400 && status < 500) console.warn('Interview feedback was not generated:', error?.response?.data?.error)
+      else console.error('Unable to generate interview feedback:', error)
       setStatusText('Interview ended, but feedback could not be generated.')
       toast.add({
         title: error?.response?.data?.error || error?.message || 'Unable to generate feedback.',

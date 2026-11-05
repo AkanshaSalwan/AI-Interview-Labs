@@ -1,7 +1,8 @@
 'use client'
 import { useState } from 'react'
-import { ChevronDown, Lightbulb, ThumbsUp, TrendingUp } from 'lucide-react'
+import { ChevronDown, Lightbulb, ThumbsUp } from 'lucide-react'
 import { cn } from '@/lib/utils'
+import QuestionCoverage from './QuestionCoverage'
 
 function scoreTone(score) {
     if (score >= 7) return 'bg-emerald-50 text-emerald-700'
@@ -40,7 +41,8 @@ function Detail({ label, labelClass, children }) {
     )
 }
 
-export function QuestionItem({ item, index }) {
+// `forRecruiter`: just what the candidate said and the score; HR judges the answer themselves.
+export function QuestionItem({ item, index, forRecruiter = false }) {
     const [open, setOpen] = useState(false)
     const score = Number(item.score)
 
@@ -65,14 +67,16 @@ export function QuestionItem({ item, index }) {
             </button>
             {open && (
                 <div className='space-y-3.5 pb-5 pl-14 pr-5'>
-                    {item.answerSummary && <Detail label='Your answer' labelClass='text-slate-400'>{item.answerSummary}</Detail>}
-                    {(item.whatWentWell || item.toImprove) && (
+                    {item.answerSummary && (
+                        <Detail label={forRecruiter ? 'Candidate’s answer' : 'Your answer'} labelClass='text-slate-400'>{item.answerSummary}</Detail>
+                    )}
+                    {!forRecruiter && (item.whatWentWell || item.toImprove) && (
                         <div className='grid gap-3.5 sm:grid-cols-2'>
                             {item.whatWentWell && <Detail label='Went well' labelClass='text-emerald-600'>{item.whatWentWell}</Detail>}
                             {item.toImprove && <Detail label='To improve' labelClass='text-orange-600'>{item.toImprove}</Detail>}
                         </div>
                     )}
-                    {item.idealAnswer && (
+                    {item.idealAnswer && !forRecruiter && (
                         <div className='rounded-xl bg-orange-50/70 p-3.5 ring-1 ring-orange-100'>
                             <p className='flex items-center gap-1.5 text-[11px] font-medium uppercase tracking-wider text-orange-600'>
                                 <Lightbulb className='size-3.5' /> A strong answer
@@ -86,21 +90,24 @@ export function QuestionItem({ item, index }) {
     )
 }
 
-// Strengths, areas to improve and per-question feedback. Renders nothing for older reports without them.
+// HR's view of a report: question coverage, strengths and each question's answer and score.
+// Renders nothing for older reports without them.
 function DetailedFeedback({ feedback }) {
     const questions = Array.isArray(feedback?.questionFeedback)
         ? feedback.questionFeedback.filter((item) => item?.question)
         : []
-    const hasPoints = feedback?.strengths?.length || feedback?.improvements?.length
+    const hasPoints = feedback?.strengths?.length
 
-    if (!hasPoints && !questions.length) return null
+    const hasCoverage = Array.isArray(feedback?.coverage) && feedback.coverage.length > 0
+
+    if (!hasPoints && !questions.length && !hasCoverage) return null
 
     return (
         <div className='space-y-5'>
+            <QuestionCoverage coverage={feedback?.coverage} />
             {hasPoints ? (
-                <div className='grid gap-5 md:grid-cols-2'>
+                <div>
                     <PointList icon={ThumbsUp} title='Strengths' items={feedback.strengths} iconClass='bg-emerald-50 text-emerald-600' dotClass='bg-emerald-400' />
-                    <PointList icon={TrendingUp} title='Areas to improve' items={feedback.improvements} iconClass='bg-orange-50 text-orange-500' dotClass='bg-orange-400' />
                 </div>
             ) : null}
             {questions.length > 0 && (
@@ -110,7 +117,7 @@ function DetailedFeedback({ feedback }) {
                         <span className='text-xs text-slate-400'>{questions.length} questions</span>
                     </div>
                     <ol className='card-soft divide-y divide-orange-50 overflow-hidden rounded-2xl'>
-                        {questions.map((item, index) => <QuestionItem key={index} item={item} index={index} />)}
+                        {questions.map((item, index) => <QuestionItem key={index} item={item} index={index} forRecruiter />)}
                     </ol>
                 </div>
             )}

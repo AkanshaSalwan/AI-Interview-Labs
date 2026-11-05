@@ -2,8 +2,9 @@
 import React, { useEffect, useState } from 'react'
 import axios from 'axios'
 import { toast } from '@/components/ui/toast';
-import { Loader2, Loader2Icon } from 'lucide-react';
+import { Loader2 } from 'lucide-react';
 import QuestionListContainer from './QuestionListContainer';
+import GeneratingQuestions from './GeneratingQuestions';
 import { v4 as uuidv4 } from 'uuid';
 import { createClient } from '@/services/supabaseClient';
 import { useUser } from '@/app/provider';
@@ -162,17 +163,7 @@ function QuestionList({ formData, onCreateLink, finishLabel = 'Create Interview 
 
   return (
     <div>
-      {loading &&
-        <div className='card-soft flex items-center gap-4 rounded-2xl p-5'>
-          <span className='flex size-10 shrink-0 items-center justify-center rounded-xl bg-orange-50 text-orange-500'>
-            <Loader2Icon className='size-5 animate-spin' />
-          </span>
-          <div>
-            <h2 className='text-sm font-medium text-slate-900'>Generating questions…</h2>
-            <p className='mt-0.5 text-xs text-slate-500'>Our AI is writing questions for this role and description.</p>
-          </div>
-        </div>
-      }
+      {loading && <GeneratingQuestions jobPosition={formData?.jobPosition} />}
 
       {!loading && questionList?.length > 0 && (
         <div>

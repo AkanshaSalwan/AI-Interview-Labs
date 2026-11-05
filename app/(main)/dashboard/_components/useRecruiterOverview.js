@@ -32,7 +32,7 @@ export function useRecruiterOverview() {
             const [invitesResult, reportsResult] = ids.length
                 ? await Promise.all([
                     supabase.from('interview_invites').select('*').eq('recruiter_email', user.email).order('created_at', { ascending: false }),
-                    supabase.from('interview feedback').select('id, interview_id, userName, userEmail, feedback, recommended, recruiter_status, created_at').in('interview_id', ids).order('id', { ascending: false }),
+                    supabase.from('interview feedback').select('*').in('interview_id', ids).order('id', { ascending: false }),
                 ])
                 : [{ data: [] }, { data: [] }]
 
@@ -49,27 +49,32 @@ export function useRecruiterOverview() {
         setOverview((current) => current && { ...current, invites: [invite, ...current.invites] })
     }, [])
 
-    // Shortlist / hire / reject a report. Shows the change at once and puts the old value back if the save fails.
-    const setDecision = useCallback(async (reportId, recruiter_status) => {
-        const applyStatus = (status) => setOverview((current) => current && {
+    // Saves HR's changes to a report (decision, notes, message to the candidate).
+    // Shows the change at once and puts the old values back if the save fails.
+    const updateReport = useCallback(async (reportId, changes) => {
+        const previous = overview?.reports.find((report) => report.id === reportId)
+        const apply = (values) => setOverview((current) => current && {
             ...current,
-            reports: current.reports.map((report) => (report.id === reportId ? { ...report, recruiter_status: status } : report)),
+            reports: current.reports.map((report) => (report.id === reportId ? { ...report, ...values } : report)),
         })
-        const previous = overview?.reports.find((report) => report.id === reportId)?.recruiter_status ?? 'pending'
 
-        applyStatus(recruiter_status)
-        const { error } = await supabase.from('interview feedback').update({ recruiter_status }).eq('id', reportId)
+        apply(changes)
+        const { error } = await supabase.from('interview feedback').update(changes).eq('id', reportId)
         if (error) {
-            applyStatus(previous)
-            toast.add({
-                title: 'Could not save the decision',
-                // 23514 = check constraint: the "hired" stage needs migration 009.
-                description: error.code === '23514' ? 'Run supabase/migrations/009_hired_status.sql in Supabase first.' : error.message,
-            })
+            if (previous) apply(Object.fromEntries(Object.keys(changes).map((key) => [key, previous[key]])))
+            // 23514 = check constraint ("hired" needs migration 009); PGRST204/42501 = column missing or not allowed (010).
+            const hint = error.code === '23514'
+                ? 'Run supabase/migrations/009_hired_status.sql in Supabase first.'
+                : ['PGRST204', '42501'].includes(error.code) && 'candidate_message' in changes
+                    ? 'Run supabase/migrations/010_deadlines_and_messages.sql in Supabase first.'
+                    : error.message
+            toast.add({ title: 'Could not save the change', description: hint })
             return false
         }
         return true
     }, [supabase, overview])
+
+    const setDecision = useCallback((reportId, recruiter_status) => updateReport(reportId, { recruiter_status }), [updateReport])
 
     return {
         supabase,
@@ -80,5 +85,6 @@ export function useRecruiterOverview() {
         reports: overview?.reports ?? [],
         addInvite,
         setDecision,
+        updateReport,
     }
 }

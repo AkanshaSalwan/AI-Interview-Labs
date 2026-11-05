@@ -48,6 +48,34 @@ function sanitizeConversation(conversation) {
         .slice(0, MAX_MESSAGES);
 }
 
+const COVERAGE_STATUSES = new Set(["answered", "not_answered", "not_asked"]);
+
+// The interview's saved questions, in order.
+function plannedQuestions(interview) {
+    return (Array.isArray(interview?.questionList) ? interview.questionList : [])
+        .map((item) => (typeof item === "string" ? item : item?.question))
+        .filter((question) => typeof question === "string" && question.trim())
+        .map((question) => question.trim());
+}
+
+// One entry per planned question. The question text always comes from the database, never from the AI;
+// a question the AI didn't report on counts as "not_asked".
+function buildCoverage(questions, aiCoverage) {
+    const byNumber = new Map(
+        (Array.isArray(aiCoverage) ? aiCoverage : []).map((item) => [Number(item?.number), item])
+    );
+    return questions.map((question, index) => {
+        const item = byNumber.get(index + 1);
+        const status = COVERAGE_STATUSES.has(item?.status) ? item.status : "not_asked";
+        const score = Number(item?.score);
+        return {
+            question,
+            status,
+            score: status === "answered" && Number.isFinite(score) ? Math.max(0, Math.min(10, score)) : null,
+        };
+    });
+}
+
 export async function POST(request) {
     try {
         const body = await request.json();
@@ -76,10 +104,13 @@ export async function POST(request) {
         }
 
         // Practice reports are read by the candidate, so they are written to "you".
-        const finalPrompt = FEEDBACK_PROMPT.replace(
-            "{{conversation}}",
-            JSON.stringify(conversation)
-        ) + (interview.is_practice ? PRACTICE_FEEDBACK_NOTE : "");
+        const questions = plannedQuestions(interview);
+        const finalPrompt = FEEDBACK_PROMPT
+            .replace("{{conversation}}", JSON.stringify(conversation))
+            .replace(
+                "{{plannedQuestions}}",
+                questions.length ? questions.map((question, index) => `${index + 1}. ${question}`).join("\n") : "(none saved)"
+            ) + (interview.is_practice ? PRACTICE_FEEDBACK_NOTE : "");
         const openai = new OpenAI({
             baseURL: "https://openrouter.ai/api/v1",
             apiKey: process.env.OPENROUTER_API_KEY,
@@ -121,7 +152,11 @@ export async function POST(request) {
                 }
 
                 // Practice reports are already written to "you"; mark them so they are never rewritten.
-                const feedbackData = interview.is_practice ? { ...parsed.feedback, voice: "you" } : parsed.feedback;
+                const feedbackData = {
+                    ...parsed.feedback,
+                    coverage: buildCoverage(questions, parsed.feedback.coverage),
+                    ...(interview.is_practice && { voice: "you" }),
+                };
                 const recommendationText = String(feedbackData.recommendation || "");
                 const { data: savedId, error: saveError } = await supabase.rpc("submit_interview_feedback", {
                     p_interview_id: interview_id,

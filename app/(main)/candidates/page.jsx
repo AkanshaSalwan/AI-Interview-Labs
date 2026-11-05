@@ -1,25 +1,74 @@
 'use client'
 import { useCallback, useMemo, useState } from 'react'
-import { GitCompareArrows, Search, UsersRound } from 'lucide-react'
+import { useRouter } from 'next/navigation'
+import { BriefcaseBusiness, ChevronDown, Filter, GitCompareArrows, KanbanSquare, List, Search, UserRound, UsersRound } from 'lucide-react'
 import { toast } from '@/components/ui/toast'
 import { cn } from '@/lib/utils'
 import { useRecruiterOverview } from '../dashboard/_components/useRecruiterOverview'
-import PageHeader from '../_components/PageHeader'
 import EmptyState from '../_components/EmptyState'
-import CandidateCard from './_components/CandidateCard'
+import CandidateBoard from './_components/CandidateBoard'
+import CandidateTable from './_components/CandidateTable'
 import CompareDialog from './_components/CompareDialog'
 import { STAGES, buildCandidates, roleKey } from './_components/pipeline'
 
 const MAX_COMPARE = 3
 
+const VIEWS = [
+    { id: 'board', label: 'Board', icon: KanbanSquare },
+    { id: 'list', label: 'List', icon: List },
+]
+
+// A native select with an icon on the left and a chevron on the right.
+function FilterSelect({ icon: Icon, value, onChange, children, label }) {
+    return (
+        <label className='relative w-full sm:w-48'>
+            <Icon className='pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-slate-500' />
+            <select
+                aria-label={label}
+                value={value}
+                onChange={(event) => onChange(event.target.value)}
+                className='field h-9 cursor-pointer appearance-none pl-9 pr-8 font-medium text-slate-700'
+            >
+                {children}
+            </select>
+            <ChevronDown className='pointer-events-none absolute right-3 top-1/2 size-4 -translate-y-1/2 text-slate-400' />
+        </label>
+    )
+}
+
+// Count tile at the top; clicking it filters the list to that stage.
+function StageTile({ label, count, dot, tint, active, onClick }) {
+    return (
+        <button
+            type='button'
+            onClick={onClick}
+            aria-pressed={active}
+            className={cn(
+                'flex cursor-pointer items-center gap-3 rounded-2xl border px-4 py-3 text-left transition-all',
+                tint ?? 'bg-white',
+                active ? 'border-orange-300 ring-2 ring-orange-100' : 'border-slate-200/60 hover:border-slate-300'
+            )}
+        >
+            {dot
+                ? <span className={cn('size-2.5 shrink-0 rounded-full', dot)} />
+                : <span className='flex size-8 shrink-0 items-center justify-center rounded-full bg-slate-100 text-slate-600'><UserRound className='size-4' /></span>}
+            <span>
+                <span className='block text-lg font-semibold leading-tight tabular-nums text-slate-900'>{count}</span>
+                <span className='block text-xs text-slate-500'>{label}</span>
+            </span>
+        </button>
+    )
+}
+
 function CandidatesPage() {
+    const router = useRouter()
     const { loading, interviews, invites, reports, setDecision } = useRecruiterOverview()
     const [query, setQuery] = useState('')
     const [role, setRole] = useState('all')
+    const [stageFilter, setStageFilter] = useState('all')
+    const [view, setView] = useState('list')
     const [selectedKeys, setSelectedKeys] = useState([])
     const [comparing, setComparing] = useState(false)
-    const [draggingKey, setDraggingKey] = useState(null)
-    const [overStage, setOverStage] = useState(null)
 
     const candidates = useMemo(() => buildCandidates(interviews, invites, reports), [interviews, invites, reports])
 
@@ -34,14 +83,13 @@ function CandidatesPage() {
     }, [interviews])
 
     const search = query.trim().toLowerCase()
-    const visible = candidates.filter((candidate) =>
+    // Search and role first: the stage tiles count within them.
+    const inScope = candidates.filter((candidate) =>
         (role === 'all' || roleKey(candidate.interview.jobPosition) === role)
-        && (!search || `${candidate.name ?? ''} ${candidate.email ?? ''}`.toLowerCase().includes(search))
+        && (!search || `${candidate.name ?? ''} ${candidate.email ?? ''} ${candidate.interview.jobPosition ?? ''}`.toLowerCase().includes(search))
     )
-    const byStage = Object.fromEntries(STAGES.map((stage) => [
-        stage.id,
-        visible.filter((candidate) => candidate.stage === stage.id).sort((a, b) => (b.score ?? -1) - (a.score ?? -1)),
-    ]))
+    const stageCounts = Object.fromEntries(STAGES.map((stage) => [stage.id, inScope.filter((candidate) => candidate.stage === stage.id).length]))
+    const visible = inScope.filter((candidate) => stageFilter === 'all' || candidate.stage === stageFilter)
     const selected = selectedKeys.map((key) => candidates.find((candidate) => candidate.key === key)).filter(Boolean)
 
     const toggleSelect = (candidate) => {
@@ -55,36 +103,31 @@ function CandidatesPage() {
         })
     }
 
-    const onDragStart = (event, candidate) => {
-        event.dataTransfer.setData('text/plain', candidate.key)
-        event.dataTransfer.effectAllowed = 'move'
-        setDraggingKey(candidate.key)
-    }
-
-    const onDrop = (event, stageId) => {
-        event.preventDefault()
-        setOverStage(null)
-        const candidate = candidates.find((item) => item.key === event.dataTransfer.getData('text/plain'))
-        if (!candidate?.report || candidate.stage === stageId) return
-        if (stageId === 'assigned') {
-            toast.add({ title: 'This candidate already took the interview', description: 'Move them to another stage instead.' })
-            return
-        }
-        setDecision(candidate.report.id, stageId)
-    }
-
+    const moveCandidate = (candidate, stageId) => setDecision(candidate.report.id, stageId)
     const closeCompare = useCallback(() => setComparing(false), [])
+    // "View details" opens the candidate's own page; without an email, fall back to the interview page.
+    const openCandidate = (candidate) => router.push(candidate.email
+        ? `/candidates/${candidate.interview.interview_id}/${encodeURIComponent(candidate.email.toLowerCase())}`
+        : `/scheduled-interviews/${candidate.interview.interview_id}`)
 
     return (
-        <div>
-            <PageHeader
-                title='Candidates'
-                description='Drag candidates between stages as you decide. Tick 2–3 cards to compare them.'
-            />
+        <div className='relative'>
+            {/* Folded-paper accent in the top-right corner */}
+            <div aria-hidden className='paper-lift pointer-events-none absolute -right-8 -top-6 hidden h-28 w-56 md:block'>
+                <div className='fold-shard-top right-0 top-0 h-full w-full opacity-80' />
+            </div>
+
+            <div className='relative mb-5'>
+                <h1 className='text-2xl font-semibold tracking-tight text-slate-900 sm:text-[28px]'>Candidates</h1>
+                <p className='mt-1 text-[15px] text-slate-500'>Manage and track candidates across interview stages.</p>
+            </div>
 
             {loading ? (
-                <div className='grid grid-cols-5 gap-3'>
-                    {STAGES.map((stage) => <div key={stage.id} className='h-64 animate-pulse rounded-2xl bg-orange-50/60' />)}
+                <div className='space-y-3'>
+                    <div className='grid grid-cols-3 gap-3 lg:grid-cols-6'>
+                        {[0, 1, 2, 3, 4, 5].map((item) => <div key={item} className='h-16 animate-pulse rounded-2xl bg-orange-50/60' />)}
+                    </div>
+                    <div className='h-64 animate-pulse rounded-2xl bg-orange-50/60' />
                 </div>
             ) : !candidates.length ? (
                 <EmptyState
@@ -94,75 +137,70 @@ function CandidatesPage() {
                 />
             ) : (
                 <>
-                    <div className='mb-4 flex flex-col gap-2.5 sm:flex-row sm:items-center'>
-                        <label className='relative w-full sm:max-w-xs'>
+                    {/* Filters and view switch */}
+                    <div className='mb-4 flex flex-col gap-2.5 lg:flex-row lg:items-center'>
+                        <label className='relative w-full lg:max-w-xs'>
                             <Search className='pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-slate-400' />
                             <input
                                 value={query}
                                 onChange={(event) => setQuery(event.target.value)}
-                                placeholder='Search by name or email'
+                                placeholder='Search by name, email or role…'
                                 className='field h-9 pl-9'
                             />
                         </label>
-                        <select value={role} onChange={(event) => setRole(event.target.value)} className='field h-9 cursor-pointer sm:max-w-[240px]'>
-                            <option value='all'>All roles</option>
-                            {roles.map(([key, label]) => <option key={key} value={key}>{label}</option>)}
-                        </select>
-                        <p className='shrink-0 text-xs text-slate-500 sm:ml-auto'>{visible.length} candidate{visible.length === 1 ? '' : 's'}</p>
-                    </div>
-
-                    <div className='overflow-x-auto pb-24'>
-                        <div className='grid min-w-[880px] grid-cols-5 gap-3'>
-                            {STAGES.map((stage) => {
-                                const isDropTarget = draggingKey && stage.id !== 'assigned'
-                                return (
-                                    <section
-                                        key={stage.id}
-                                        onDragOver={(event) => {
-                                            if (!isDropTarget) return
-                                            event.preventDefault()
-                                            setOverStage(stage.id)
-                                        }}
-                                        onDragLeave={(event) => {
-                                            if (!event.currentTarget.contains(event.relatedTarget)) setOverStage(null)
-                                        }}
-                                        onDrop={(event) => onDrop(event, stage.id)}
-                                        className={cn(
-                                            'flex min-w-0 flex-col rounded-2xl border p-2 transition-colors',
-                                            overStage === stage.id ? 'border-orange-300 bg-orange-50' : 'border-slate-200/50 bg-white/50'
-                                        )}
-                                    >
-                                        <header className='flex items-center gap-2 whitespace-nowrap px-2 pb-2.5 pt-1.5'>
-                                            <span className={cn('size-2 shrink-0 rounded-full', stage.dot)} />
-                                            <h2 className='text-[13px] font-semibold text-slate-800'>{stage.label}</h2>
-                                            <span className='ml-auto rounded-full bg-slate-100 px-2 py-px text-[11px] font-semibold tabular-nums text-slate-500'>{byStage[stage.id].length}</span>
-                                        </header>
-                                        <ul className='flex flex-col gap-2'>
-                                            {byStage[stage.id].map((candidate) => (
-                                                <CandidateCard
-                                                    key={candidate.key}
-                                                    candidate={candidate}
-                                                    selectable={Boolean(candidate.report)}
-                                                    selected={selectedKeys.includes(candidate.key)}
-                                                    onToggleSelect={toggleSelect}
-                                                    onDragStart={onDragStart}
-                                                    onDragEnd={() => { setDraggingKey(null); setOverStage(null) }}
-                                                    dragging={draggingKey === candidate.key}
-                                                />
-                                            ))}
-                                            {isDropTarget && overStage === stage.id ? (
-                                                <li className='flex h-16 items-center justify-center rounded-xl border-2 border-dashed border-orange-300 text-xs font-medium text-orange-600'>
-                                                    Drop to move here
-                                                </li>
-                                            ) : !byStage[stage.id].length && (
-                                                <li className='px-2 pb-3 pt-1 text-xs leading-relaxed text-slate-400'>{stage.empty}</li>
-                                            )}
-                                        </ul>
-                                    </section>
-                                )
-                            })}
+                        <div className='flex flex-col gap-2.5 sm:flex-row'>
+                            <FilterSelect icon={BriefcaseBusiness} label='Role' value={role} onChange={setRole}>
+                                <option value='all'>All roles</option>
+                                {roles.map(([key, label]) => <option key={key} value={key}>{label}</option>)}
+                            </FilterSelect>
+                            <FilterSelect icon={Filter} label='Stage' value={stageFilter} onChange={setStageFilter}>
+                                <option value='all'>All stages</option>
+                                {STAGES.map((stage) => <option key={stage.id} value={stage.id}>{stage.label}</option>)}
+                            </FilterSelect>
+                        </div>
+                        <div className='inline-flex shrink-0 self-start rounded-[0.625rem] border border-slate-200 bg-white p-0.5 lg:ml-auto lg:self-auto' role='group' aria-label='View'>
+                            {VIEWS.map(({ id, label, icon: Icon }) => (
+                                <button
+                                    key={id}
+                                    type='button'
+                                    aria-pressed={view === id}
+                                    onClick={() => setView(id)}
+                                    className={cn(
+                                        'inline-flex h-8 cursor-pointer items-center gap-1.5 rounded-lg px-3 text-[13px] font-medium transition-colors',
+                                        view === id ? 'bg-orange-50 text-orange-700 ring-1 ring-orange-300' : 'text-slate-600 hover:text-slate-900'
+                                    )}
+                                >
+                                    <Icon className='size-4' /> {label}
+                                </button>
+                            ))}
                         </div>
                     </div>
+
+                    {/* Stage counts */}
+                    <div className='mb-4 grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-6'>
+                        <StageTile label='Total candidates' count={inScope.length} active={stageFilter === 'all'} onClick={() => setStageFilter('all')} />
+                        {STAGES.map((stage) => (
+                            <StageTile
+                                key={stage.id}
+                                label={stage.label}
+                                count={stageCounts[stage.id]}
+                                dot={stage.dot}
+                                tint={stage.tint}
+                                active={stageFilter === stage.id}
+                                onClick={() => setStageFilter(stageFilter === stage.id ? 'all' : stage.id)}
+                            />
+                        ))}
+                    </div>
+
+                    {!visible.length ? (
+                        <EmptyState icon={Search} title='No candidates match' description='Try another stage, role or search.' />
+                    ) : view === 'list' ? (
+                        <div className='pb-24'>
+                            <CandidateTable candidates={visible} selectedKeys={selectedKeys} onOpen={openCandidate} />
+                        </div>
+                    ) : (
+                        <CandidateBoard candidates={visible} selectedKeys={selectedKeys} onMove={moveCandidate} onToggleSelect={toggleSelect} onOpen={openCandidate} />
+                    )}
                 </>
             )}
 

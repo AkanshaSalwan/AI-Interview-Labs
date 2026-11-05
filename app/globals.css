@@ -392,3 +392,81 @@
     box-shadow: 0 0 0 3px rgba(251, 146, 60, 0.18);
   }
 }
+
+/* ───────────── "AI is working" animation (see GeneratingQuestions) ───────────── */
+@layer components {
+  .ai-glow {
+    background:
+      radial-gradient(ellipse 60% 70% at 50% 0%, rgba(255, 214, 178, 0.45), transparent 70%),
+      linear-gradient(180deg, #fffaf6, #ffffff);
+  }
+
+  /* Spinning orange-peach orb. */
+  .ai-orb {
+    background: conic-gradient(from 0deg, #fb923c, #fed7aa, #f97316, #ffedd5, #fb923c);
+    filter: blur(2px);
+    animation: ai-spin 3.2s linear infinite;
+    box-shadow: 0 0 32px rgba(249, 115, 22, 0.35);
+  }
+
+  /* Rings rippling out from the orb. */
+  .ai-ring {
+    animation: ai-ripple 1.6s ease-out infinite;
+  }
+
+  .ai-sparkle {
+    animation: ai-breathe 1.6s ease-in-out infinite;
+  }
+
+  /* "…" that types itself after a line of text. */
+  .ai-dots::after {
+    content: "";
+    display: inline-block;
+    width: 1.2em;
+    text-align: left;
+    animation: ai-dots 1.4s steps(4, end) infinite;
+  }
+
+  /* Placeholder text line with a light sweeping across it. */
+  .ai-shimmer {
+    background: linear-gradient(90deg, #f6ebe1 0%, #fde3cc 40%, #f6ebe1 80%);
+    background-size: 200% 100%;
+    animation: ai-shimmer 1.4s ease-in-out infinite;
+  }
+
+  /* Question cards sliding in one after another. */
+  .ai-card-in {
+    opacity: 0;
+    animation: ai-card-in 0.6s ease-out forwards;
+  }
+}
+
+@keyframes ai-spin { to { transform: rotate(360deg); } }
+@keyframes ai-ripple {
+  0% { transform: scale(0.7); opacity: 0.9; }
+  100% { transform: scale(1.35); opacity: 0; }
+}
+@keyframes ai-breathe {
+  0%, 100% { transform: scale(1) rotate(0deg); }
+  50% { transform: scale(1.15) rotate(8deg); }
+}
+@keyframes ai-dots {
+  0% { content: ""; }
+  25% { content: "."; }
+  50% { content: ".."; }
+  75%, 100% { content: "..."; }
+}
+@keyframes ai-shimmer {
+  0% { background-position: 100% 0; }
+  100% { background-position: -100% 0; }
+}
+@keyframes ai-card-in {
+  from { opacity: 0; transform: translateY(8px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+/* Respect "reduce motion": keep the look, drop the movement. */
+@media (prefers-reduced-motion: reduce) {
+  .ai-orb, .ai-ring, .ai-sparkle, .ai-shimmer, .ai-dots::after { animation: none; }
+  .ai-card-in { animation: none; opacity: 1; }
+}

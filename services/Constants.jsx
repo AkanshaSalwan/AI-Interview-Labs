@@ -104,13 +104,22 @@ export const FEEDBACK_PROMPT = `You are an experienced interviewer reviewing an 
 Interview Conversation:
 {{conversation}}
 
+Planned interview questions (numbered):
+{{plannedQuestions}}
+
 Evaluate the candidate:
 - Rate them out of 10 for technical skills, communication, problem solving, and experience.
 - Write a 3-line summary.
 - List 2-4 specific strengths and 2-4 specific areas to improve, referring to what they actually said.
-- For EVERY question the interviewer actually asked, give: the question, a one-sentence summary of the
+- For EVERY interview question the interviewer actually asked, give: the question, a one-sentence summary of the
   candidate's answer, a score out of 10, what went well, what to improve, and a short example of a
   strong answer. If the candidate did not answer a question, score it 0 and say so.
+  Only real interview questions count: ignore greetings and small talk (e.g. "How are you?",
+  "Are you ready for your interview?") and closing remarks, and do not score them.
+- For EACH planned question above, by its number, say whether it was covered in the conversation:
+  "answered" (the interviewer asked it, possibly reworded, and the candidate gave a real answer),
+  "not_answered" (it was asked, but the candidate said they didn't know, gave no real answer, or the call ended),
+  or "not_asked" (the interviewer never asked it). Give the answer's score out of 10 when answered, otherwise null.
 - State whether the candidate is recommended for hire ("Recommended" or "Not Recommended") with a short explanation.
 
 Return ONLY valid JSON, with this exact structure:
@@ -134,6 +143,10 @@ Return ONLY valid JSON, with this exact structure:
         "toImprove": "What was missing or could be better.",
         "idealAnswer": "A short example of a strong answer."
       }
+    ],
+    "coverage": [
+      { "number": 1, "status": "answered", "score": 7 },
+      { "number": 2, "status": "not_asked", "score": null }
     ],
     "recommendation": "Recommended",
     "recommendationMessage": "Explanation of the recommendation."

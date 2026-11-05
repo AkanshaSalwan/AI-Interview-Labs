@@ -17,9 +17,9 @@ const RATING_LABELS = {
 
 // The next steps HR can take on a finished interview. Clicking the active one again undoes it.
 const DECISION_BUTTONS = [
-    { status: 'shortlisted', label: 'Shortlist', icon: Check, active: 'border-sky-500 bg-sky-500 text-white', idle: 'hover:border-sky-300 hover:bg-sky-50 hover:text-sky-700' },
-    { status: 'hired', label: 'Hire', icon: BadgeCheck, active: 'border-emerald-500 bg-emerald-500 text-white', idle: 'hover:border-emerald-300 hover:bg-emerald-50 hover:text-emerald-700' },
-    { status: 'rejected', label: 'Reject', icon: X, active: 'border-red-500 bg-red-500 text-white', idle: 'hover:border-red-300 hover:bg-red-50 hover:text-red-600' },
+    { status: 'shortlisted', label: 'Shortlist', icon: Check, active: 'border-sky-500 bg-sky-500 text-white', idle: 'border-sky-200 bg-sky-50 text-sky-700 hover:border-sky-300 hover:bg-sky-100' },
+    { status: 'hired', label: 'Hire', icon: BadgeCheck, active: 'border-emerald-500 bg-emerald-500 text-white', idle: 'border-emerald-200 bg-emerald-50 text-emerald-700 hover:border-emerald-300 hover:bg-emerald-100' },
+    { status: 'rejected', label: 'Reject', icon: X, active: 'border-red-500 bg-red-500 text-white', idle: 'border-red-200 bg-red-50 text-red-600 hover:border-red-300 hover:bg-red-100' },
 ]
 
 function scoreTone(score) {
@@ -29,7 +29,7 @@ function scoreTone(score) {
 }
 
 // A text box saved to one column of the report, with a Save button that appears once it changes.
-function ReportTextField({ title, hint, placeholder, initialValue, saveLabel, onSave }) {
+export function ReportTextField({ title, hint, placeholder, initialValue, saveLabel, onSave }) {
     const [value, setValue] = useState(initialValue ?? '')
     const [saving, setSaving] = useState(false)
     const [saved, setSaved] = useState(initialValue ?? '')
@@ -122,7 +122,7 @@ function CandidateRow({ candidate, rank, onDecision, onSaveField, onResendInvite
                                     onClick={() => onDecision(report.id, decision === status ? 'pending' : status)}
                                     className={cn(
                                         'flex h-8 cursor-pointer items-center gap-1 rounded-lg border px-2.5 text-[13px] font-medium transition-colors',
-                                        decision === status ? active : cn('border-slate-200 text-slate-600', idle)
+                                        decision === status ? active : idle
                                     )}
                                 >
                                     <Icon className='size-3.5' /> {label}
@@ -132,7 +132,7 @@ function CandidateRow({ candidate, rank, onDecision, onSaveField, onResendInvite
                                 type='button'
                                 onClick={() => setOpen((value) => !value)}
                                 aria-expanded={open}
-                                className='flex h-8 cursor-pointer items-center gap-1 rounded-lg border border-slate-200 px-2.5 text-[13px] font-medium text-slate-700 hover:bg-slate-50'
+                                className='btn-orange flex h-8 cursor-pointer items-center gap-1 rounded-lg px-3 text-[13px] font-medium text-white transition-[filter] hover:brightness-105'
                             >
                                 Report <ChevronDown className={cn('size-4 transition-transform', open && 'rotate-180')} />
                             </button>
