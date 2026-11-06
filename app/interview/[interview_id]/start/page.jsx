@@ -100,7 +100,10 @@ function formatDuration(totalSeconds) {
 }
 
 // How long the candidate may stay silent before the assistant moves to the next question.
-const CANDIDATE_SILENCE_LIMIT_MS = 5 * 60 * 1000
+const CANDIDATE_SILENCE_LIMIT_MS = 60 * 1000
+// If the candidate asked for time ("wait", "let me think"...), allow this much instead.
+const CANDIDATE_WAIT_LIMIT_MS = 3 * 60 * 1000
+const WAIT_REQUEST = /\b(wait|hold on|one (minute|moment|sec(ond)?)|a (minute|moment|sec(ond)?)|let me think|give me (a |some )?(time|moment|minute|sec(ond)?)|need (some )?time)\b/i
 
 function StartInterview() {
   const { interviewInfo } = useContext(InterviewDataContext)
@@ -119,7 +122,11 @@ function StartInterview() {
   const lastActivityAtRef = useRef(0)
   const silenceCheckRef = useRef(null)
   const assistantSpeakingRef = useRef(false)
+  // True after the candidate asks for time; switches the silence limit to CANDIDATE_WAIT_LIMIT_MS.
+  const waitRequestedRef = useRef(false)
   const [callActive, setCallActive] = useState(false)
+  // Once the call has ended it cannot be restarted from this page.
+  const [callEnded, setCallEnded] = useState(false)
   const [isStarting, setIsStarting] = useState(false)
   const [elapsedSeconds, setElapsedSeconds] = useState(0)
   const [statusText, setStatusText] = useState('Ready to begin')
@@ -168,18 +175,21 @@ function StartInterview() {
       }, 1000)
 
       lastActivityAtRef.current = Date.now()
+      waitRequestedRef.current = false
       clearInterval(silenceCheckRef.current)
       silenceCheckRef.current = setInterval(() => {
         if (!callActiveRef.current || assistantSpeakingRef.current) return
-        if (Date.now() - lastActivityAtRef.current < CANDIDATE_SILENCE_LIMIT_MS) return
+        const waited = waitRequestedRef.current
+        const limit = waited ? CANDIDATE_WAIT_LIMIT_MS : CANDIDATE_SILENCE_LIMIT_MS
+        if (Date.now() - lastActivityAtRef.current < limit) return
         lastActivityAtRef.current = Date.now()
+        waitRequestedRef.current = false
         try {
           vapi.send({
             type: 'add-message',
             message: {
               role: 'system',
-              content:
-                'The candidate has not replied for 5 minutes. Say "No problem, let\'s move on." and ask the next question. If that was the last question, give the closing feedback instead.',
+              content: `The candidate has not replied for ${waited ? '3 minutes' : '1 minute'}. Say "No problem, let's move on." and ask the next question. If that was the last question, give the closing feedback instead.`,
             },
             triggerResponseEnabled: true,
           })
@@ -199,6 +209,7 @@ function StartInterview() {
         void generateFeedbackRef.current()
       }, 1500)
       callActiveRef.current = false
+      setCallEnded(true)
       clearInterval(timerIntervalRef.current)
       timerIntervalRef.current = null
       clearInterval(silenceCheckRef.current)
@@ -216,9 +227,13 @@ function StartInterview() {
     }
 
     const onMessage = (message) => {
-      // Any candidate speech (partial or final) counts as activity and resets the 5-minute silence timer.
+      // Any candidate speech (partial or final) counts as activity and resets the silence timer.
       if (message?.type === 'transcript' && message?.role === 'user' && message?.transcript) {
         lastActivityAtRef.current = Date.now()
+        // Each finished sentence decides the limit: "wait"-type requests get 3 minutes, anything else 1 minute.
+        if (!message.transcriptType || message.transcriptType === 'final') {
+          waitRequestedRef.current = WAIT_REQUEST.test(message.transcript)
+        }
       }
 
       if (
@@ -291,7 +306,7 @@ function StartInterview() {
 
   const startCall = async () => {
     const vapi = vapiRef.current
-    if (!vapi || !interviewInfo || callActiveRef.current || isStarting) return
+    if (!vapi || !interviewInfo || callActiveRef.current || isStarting || callEnded) return
 
     // Numbered, one per line: questions often contain commas, so a comma-separated list blurs them together.
     const questions = (interviewInfo?.interviewData?.questionList ?? [])
@@ -319,7 +334,7 @@ function StartInterview() {
         version: 2,
       },
       // Vapi hangs up after 30s of silence by default. Keep the call open while the candidate
-      // thinks; the client-side 5-minute timer (CANDIDATE_SILENCE_LIMIT_MS) moves things along instead.
+      // thinks; the client-side silence timer (1 min, or 3 min after "wait") moves things along instead.
       silenceTimeoutSeconds: 7 * 60,
       // Default max call length is 10 minutes, which can cut interviews short.
       maxDurationSeconds: 60 * 60,
@@ -370,7 +385,7 @@ If the candidate asks for the answer or a hint, reply exactly like:
 - If the candidate says "wait", "one minute", "hold on", "let me think", "give me a moment" or anything similar, reply ONLY "Sure, take your time." and then stay silent. Do NOT ask the next question.
 - Stay on the current question until the candidate actually gives an answer, or says something like "you can proceed", "next question", "skip", "move on" or "I don't know".
 - If the candidate's reply sounds unfinished (cut off mid-sentence, "umm", "so...", "and..."), they are still thinking: reply ONLY "Take your time." Do NOT move on.
-- Never rush the candidate. The system will tell you if they have been silent too long; only then move on.
+- Never rush the candidate. The system will tell you when they have been silent too long (1 minute, or 3 minutes after they asked you to wait); only then move on.
 
 === IF THE CANDIDATE WANTS TO END EARLY ===
 - If the candidate says they want to stop before all questions are done (e.g. "I am done", "we can end here", "I want to stop", "end the interview"), confirm ONCE: "Sure. Just to confirm, you'd like to end the interview now?"
@@ -580,11 +595,11 @@ Then say: "Detailed written feedback will appear on your screen in a moment. Tha
           <button
             type='button'
             onClick={startCall}
-            disabled={!interviewInfo || isStarting}
+            disabled={!interviewInfo || isStarting || callEnded}
             className='btn-orange inline-flex h-11 cursor-pointer items-center gap-2 rounded-xl px-6 text-sm font-medium text-white transition-[filter,transform] hover:brightness-105 active:scale-[0.99] disabled:cursor-not-allowed disabled:opacity-50'
           >
             <Mic className='size-4' />
-            {isStarting ? 'Connecting…' : 'Start interview'}
+            {callEnded ? 'Interview ended' : isStarting ? 'Connecting…' : 'Start interview'}
           </button>
         </div>
       )}
