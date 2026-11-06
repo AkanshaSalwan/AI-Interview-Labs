@@ -99,6 +99,9 @@ function formatDuration(totalSeconds) {
     .join(':')
 }
 
+// How long the candidate may stay silent before the assistant moves to the next question.
+const CANDIDATE_SILENCE_LIMIT_MS = 5 * 60 * 1000
+
 function StartInterview() {
   const { interviewInfo } = useContext(InterviewDataContext)
   const { interview_id: interviewId } = useParams()
@@ -112,6 +115,10 @@ function StartInterview() {
   const generateFeedbackRef = useRef(async () => {})
   const timerIntervalRef = useRef(null)
   const timerStartedAtRef = useRef(null)
+  // Candidate-silence tracking: after CANDIDATE_SILENCE_LIMIT_MS of no reply, tell the assistant to move on.
+  const lastActivityAtRef = useRef(0)
+  const silenceCheckRef = useRef(null)
+  const assistantSpeakingRef = useRef(false)
   const [callActive, setCallActive] = useState(false)
   const [isStarting, setIsStarting] = useState(false)
   const [elapsedSeconds, setElapsedSeconds] = useState(0)
@@ -159,6 +166,28 @@ function StartInterview() {
           setElapsedSeconds(Math.floor((Date.now() - startedAt) / 1000))
         }
       }, 1000)
+
+      lastActivityAtRef.current = Date.now()
+      clearInterval(silenceCheckRef.current)
+      silenceCheckRef.current = setInterval(() => {
+        if (!callActiveRef.current || assistantSpeakingRef.current) return
+        if (Date.now() - lastActivityAtRef.current < CANDIDATE_SILENCE_LIMIT_MS) return
+        lastActivityAtRef.current = Date.now()
+        try {
+          vapi.send({
+            type: 'add-message',
+            message: {
+              role: 'system',
+              content:
+                'The candidate has not replied for 5 minutes. Say "No problem, let\'s move on." and ask the next question. If that was the last question, give the closing feedback instead.',
+            },
+            triggerResponseEnabled: true,
+          })
+        } catch (_) {
+          // call may have just ended
+        }
+      }, 5000)
+
       setCallActive(true)
       setIsStarting(false)
       setStatusText('Interview in Progress....')
@@ -172,6 +201,9 @@ function StartInterview() {
       callActiveRef.current = false
       clearInterval(timerIntervalRef.current)
       timerIntervalRef.current = null
+      clearInterval(silenceCheckRef.current)
+      silenceCheckRef.current = null
+      assistantSpeakingRef.current = false
       timerStartedAtRef.current = null
       setCallActive(false)
       setIsStarting(false)
@@ -184,6 +216,11 @@ function StartInterview() {
     }
 
     const onMessage = (message) => {
+      // Any candidate speech (partial or final) counts as activity and resets the 5-minute silence timer.
+      if (message?.type === 'transcript' && message?.role === 'user' && message?.transcript) {
+        lastActivityAtRef.current = Date.now()
+      }
+
       if (
         message?.type === 'transcript' &&
         message?.role &&
@@ -215,10 +252,14 @@ function StartInterview() {
     }
 
     const onSpeechStart = () => {
+      assistantSpeakingRef.current = true
       setIsAssistantSpeaking(true)
     }
 
     const onSpeechEnd = () => {
+      // The candidate's 5-minute window starts once the assistant finishes speaking.
+      assistantSpeakingRef.current = false
+      lastActivityAtRef.current = Date.now()
       setIsAssistantSpeaking(false)
     }
 
@@ -236,6 +277,7 @@ function StartInterview() {
 
     return () => {
       clearInterval(timerIntervalRef.current)
+      clearInterval(silenceCheckRef.current)
       vapi.removeListener('call-start', onCallStart)
       vapi.removeListener('call-end', onCallEnd)
       vapi.removeListener('message', onMessage)
@@ -276,39 +318,85 @@ function StartInterview() {
         voiceId: 'Emma',
         version: 2,
       },
+      // Vapi hangs up after 30s of silence by default. Keep the call open while the candidate
+      // thinks; the client-side 5-minute timer (CANDIDATE_SILENCE_LIMIT_MS) moves things along instead.
+      silenceTimeoutSeconds: 7 * 60,
+      // Default max call length is 10 minutes, which can cut interviews short.
+      maxDurationSeconds: 60 * 60,
+      // Wait longer before deciding the candidate finished talking, so short pauses while
+      // thinking are not treated as the end of an answer.
+      startSpeakingPlan: {
+        waitSeconds: 1.5,
+        transcriptionEndpointingPlan: {
+          onPunctuationSeconds: 1.5,
+          onNoPunctuationSeconds: 3,
+          onNumberSeconds: 2,
+        },
+      },
       model: {
         provider: 'openai',
         model: 'gpt-4o',
+        // Low temperature so the assistant sticks to the strict interviewer rules below.
+        temperature: 0.3,
+        // Lets the assistant hang up by itself after the closing feedback; call-end then triggers written feedback.
+        tools: [{ type: 'endCall' }],
         messages: [
           {
             role: 'system',
             content: `
-You are an AI voice assistant conducting interviews.
-Your job is to ask candidates provided interview questions, assess their responses.
-Begin the conversation with a friendly introduction, setting a relaxed yet professional tone. Example:
-"Hey there! Welcome to your ${interviewInfo?.interviewData?.jobPosition} interview. Let's get started with a few questions!"
+You are a professional interviewer conducting a voice interview for the ${interviewInfo?.interviewData?.jobPosition} role.
+You ask questions. You never answer them. You are an interviewer, not a teacher or a tutor.
+
+=== STRICT RULES (these override everything else) ===
+1. NEVER repeat, restate, paraphrase or summarize what the candidate said.
+2. NEVER give the answer, a model answer, a hint, an example, a keyword or an explanation of the concept — not even if the candidate asks, insists, or says they don't know.
+3. NEVER say whether an answer is right, wrong, good or bad while the questions are still going. No praise, no correction, no "Great answer", no "Not quite".
+4. After the candidate answers, say ONLY a short neutral acknowledgement ("Thank you.", "Okay.", "Got it.") and then immediately ask the next question.
+5. Keep every turn to one or two short sentences.
+
+Examples of what you must NEVER say:
+- "So you're saying that React uses a virtual DOM to..."            (repeating the answer)
+- "Great answer! You covered state and props really well."         (evaluating mid-interview)
+- "Actually, the correct answer is..." / "Hint: think about caching." (giving answers or hints)
+
+Correct example:
+Candidate: "...and that's how I'd handle the API errors."
+You: "Thank you. Question 3 of ${questions.length}: <next question>"
+
+If the candidate asks for the answer or a hint, reply exactly like:
+"I'm not able to share answers during the interview, but you'll get feedback at the end. Let's move on." — then ask the next question.
+
+=== WHEN THE CANDIDATE NEEDS TIME ===
+- If the candidate says "wait", "one minute", "hold on", "let me think", "give me a moment" or anything similar, reply ONLY "Sure, take your time." and then stay silent. Do NOT ask the next question.
+- Stay on the current question until the candidate actually gives an answer, or says something like "you can proceed", "next question", "skip", "move on" or "I don't know".
+- If the candidate's reply sounds unfinished (cut off mid-sentence, "umm", "so...", "and..."), they are still thinking: reply ONLY "Take your time." Do NOT move on.
+- Never rush the candidate. The system will tell you if they have been silent too long; only then move on.
+
+=== IF THE CANDIDATE WANTS TO END EARLY ===
+- If the candidate says they want to stop before all questions are done (e.g. "I am done", "we can end here", "I want to stop", "end the interview"), confirm ONCE: "Sure. Just to confirm, you'd like to end the interview now?"
+- If they confirm (yes / sure / end it), give 2–3 sentences of brief feedback on the questions they answered (do not reveal answers), say "Thank you for your time. Your written feedback will appear on screen in a moment. Goodbye!" and then end the call yourself using the endCall tool. Do not ask the candidate to hang up.
+- If they say no or want to continue, say "No problem, let's continue." and repeat the current question.
+
+=== THE QUESTIONS ===
 This interview has exactly ${questions.length} questions. Ask ALL of them, one at a time, in this order:
 ${questionList}
-Rules for the questions:
-- Ask every question above, in order. Do not skip any, merge two into one, or add new questions of your own.
-- Ask each question in its original meaning; you may say it naturally, but keep its content.
-- Wait for the candidate's full answer before moving on. Before each one, say which it is, e.g. "Question 3 of ${questions.length}".
-- If the candidate asks you to repeat a question, repeat it. If they say they don't know, accept that and move to the next question.
-If the candidate struggles, offer hints or rephrase the question without giving away the answer. Example:
-"Need a hint? Think about the main trade-offs involved here!"
-Provide brief, encouraging feedback after each answer. Example:
-"Nice! That's a solid answer."
-"Hmm, not quite! Want to try again?"
-Keep the conversation natural and engaging—use casual phrases like "Alright, next up..." or "Let's tackle a tricky one!"
-Only after the last question (question ${questions.length}) has been answered, wrap up the interview smoothly by summarizing their performance. Example:
-"That was great! You handled some tough questions well. Keep sharpening your skills!"
-End on a positive note:
-"Thanks for chatting! Hope to see you crushing projects soon!"
-Key Guidelines:
-✅ Be friendly, engaging, and witty 🎤
-✅ Keep responses short and natural, like a real conversation
-✅ Adapt based on the candidate's confidence level
-✅ Ensure the interview remains focused on the ${interviewInfo?.interviewData?.jobPosition} role
+
+- Ask every question in order. Do not skip, merge, or add questions of your own.
+- Before each question, say its number, e.g. "Question 2 of ${questions.length}".
+- Wait for the candidate's full answer before moving on.
+- If asked to repeat the question, repeat the question only.
+- If asked what the question means, you may reword the question itself, without hinting at the answer.
+- If the candidate says they don't know, say "No problem." and move to the next question.
+
+=== START ===
+You have already greeted the candidate. As soon as they reply, ask Question 1. Do not greet them again.
+
+=== END: SPOKEN FEEDBACK ===
+Only after question ${questions.length} has been answered, the strict rule 3 no longer applies. Give short spoken feedback on the whole interview (about 4–5 sentences):
+- 1–2 things they did well.
+- 1–2 areas to improve (name the topic or skill, e.g. "explaining trade-offs", "giving concrete examples").
+- Be honest but encouraging. Do not read out model answers.
+Then say: "Detailed written feedback will appear on your screen in a moment. Thank you for your time, and good luck!" and end the call yourself using the endCall tool.
 `.trim(),
           },
         ],
